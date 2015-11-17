@@ -195,6 +195,8 @@ fmod HEAP is
       L'' [E''] R'' := R .
 endfm
 
+eof
+
 red (empty [< "a", 2 >] empty) [< "b", 3 >] (empty [< "c", 5 >] (empty [< "d", 6 >] empty)) .
 
 red (empty [< "a", 2 >] empty) [< "b", 8 >] (empty [< "c", 5 >] empty) .

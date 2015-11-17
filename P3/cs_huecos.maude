@@ -1,5 +1,3 @@
-load process.maude
-
 mod CRITICAL is
   pr HEAP .
 
@@ -17,8 +15,8 @@ mod CRITICAL is
   subsort Process < Processes .
 
   op empty : -> Processes [ctor] .
-  op __ : Processes Processes -> Processes [###############] .
-  op _[_][_] : Processes Heap ProcessWD -> CPU [###############] .
+  op __ : Processes Processes -> Processes [ctor assoc id: empty] .
+  op _[_][_] : Processes Heap ProcessWD -> CPU [ctor] .
 
   var N : Nat .
   var H : Heap .
@@ -29,16 +27,16 @@ mod CRITICAL is
 
   *** The rule "ask" introduces a process into the heap, where it is
   *** appropriately located.
-  rl [ask] : ############################################# .
+  rl [ask] : P PS [H] [PWD] => PS [insert(P, H)] [PWD] .
 
   *** The process with the highest priority in the heap (i.e., the root)
   *** is introduced with the "cs" rule in the critical section if it is empty.
-  crl [cs] : PS [H] [noProcess] => ###############
+  crl [cs] : PS [H] [noProcess] => PS [delete(H)] [root(H)]
    if not empty(H) .
 
   *** The rule "exit" takes the process in the critical section to the
   *** soup of inactive processes.
-  rl [exit] : ############################################# .
+  rl [exit] : PS [H] [P] => PS P [H] [noProcess] .
 
   *** The constants "p1", "p2", "p3", and "initial" are created for
   *** testing purposes.
@@ -51,14 +49,12 @@ mod CRITICAL is
   eq initial = p1 p2 p3 [empty] [noProcess] .
 endm
 
-eof
+rew [5] initial .
 
-Maude> rew [5] initial .
+rew [7] initial .
 
-Maude> rew [7] initial .
+search initial =>* PS:Processes [H:Heap] [< "p3", N:Nat >] .
 
-Maude> search initial =>* PS:Processes [H:Heap] [< "p3", N:Nat >] .
+search initial =>* PS:Processes [H:Heap] [< S:String, N:Nat >] s.t. S:String == "p2" .
 
-Maude> search initial =>* PS:Processes [H:Heap] [< S:String, N:Nat >] s.t. S:String == "p2" .
-
-Maude> search initial =>* PS:Processes [H:Heap] [< S:String, N:Nat >] such that S:String == "p1" .
+search initial =>* PS:Processes [H:Heap] [< S:String, N:Nat >] such that S:String == "p1" .
