@@ -1,0 +1,56 @@
+load model-checker.maude
+load full-maude.maude
+
+mod TABLA is
+  pr CONFIGURATION .
+
+  sort Entrada .
+  op nEntrada <_,_> : String Oid -> Entrada [ctor] .
+  sort Tabla .
+  subsort Entrada < Tabla .
+  op nTabla : -> Tabla [ctor] .
+  op __ : Tabla Tabla -> Tabla [ctor assoc id: nTabla] .
+
+  op insert : Tabla Entrada -> Tabla .
+  eq insert(nTabla, E) = E nTabla .
+  eq insert(< S,_ > T, < S,_ >) = 
+
+  var S : String .
+  var E : Entrada .
+  var T : Tabla .
+endm 
+
+(omod RED is
+  pr QID .
+
+  sort Mode .
+  ops idle activo lider : -> Mode [ctor] .
+
+
+ 
+
+
+  class Proceso | datos : Configuration .
+  class Nodo | IP : String, Estado : Mode .
+
+  subclass Centro < Nodo .
+  subclass Extremo < Nodo .
+  
+  class Centro | 
+
+  <_,_>
+    
+  
+***(
+op nodo 
+
+< ’p1 : Proceso | datos : < nodo('p1) : NodoCentro | ... > >
+< ’p2 : Proceso | datos : < nodo('p2) : NodoExtremo | ... > >
+< ’p3 : Proceso | datos : < nodo('p3) : NodoExtremo | ... > to nodo('p1) : hola >
+< 'c : Canal | origen : 'p1, destino : 'p3 >
+)
+
+  class Proceso | datos : Configuration .
+  class Nodo | IP : String, Estado : Mode .
+endom)
+
