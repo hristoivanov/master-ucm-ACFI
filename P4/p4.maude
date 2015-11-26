@@ -65,16 +65,7 @@ load full-maude.maude
   class Nodo | IP : String, Estado : Mode .
   sort Mode .
   ops inactivo esperando activo : -> Mode [ctor] .
-  *** Not sure .
-  ***(
-  op nodo : Object -> Object .
-  ceq nodo(B) = B' 
-    if B == < O : Proceso | datos : B' C > .
-  )***
-
-  op nodo : Configuration Oid -> Oid .
-  eq nodo(< O:Oid | datos : < O' | Ats' >, Ats > C , O) = O' .
-  *** Not sure .
+  op n : Oid -> Oid [ctor] .
 
   *** 3
   subclass Centro < Nodo .
@@ -113,42 +104,39 @@ load full-maude.maude
      < O : Extremo | Estado : esperando >
   => < O : Extremo | Estado : activo, centro : O' > .
 
-  ***8
-  ops e1 e2 e3 : -> Object .
-  eq e1 = < 'e1 : Extremo | IP : "00001", Estado : inactivo, centro : null > .
-  eq e2 = < 'e2 : Extremo | IP : "00002", Estado : inactivo, centro : null > .
-  eq e3 = < 'e3 : Extremo | IP : "00003", Estado : inactivo, centro : null > .
-  op c0 : -> Object .
-  eq c0 = < 'c0 : Centro | IP : "00000", Estado : inactivo, tabla : nTabla > .
-  op pro : Qid Object -> Object . 
-  eq pro(Q, B) = < Q : Proceso | datos : B > . 
+  
+  ***( 
   op can : Qid Oid Oid -> Object .
   eq can(Q, O, O') = < Q : Canal | origen : O, destino : O', listaOrigen : nlistaMsg, listaDestino : nlistaMsg, estado : ok > .
-
-***(
-op nodo 
-
-< ’p1 : Proceso | datos : < nodo('p1) : NodoCentro | ... > >
-< ’p2 : Proceso | datos : < nodo('p2) : NodoExtremo | ... > >
-< ’p3 : Proceso | datos : < nodo('p3) : NodoExtremo | ... > to nodo('p1) : hola >
-< 'c : Canal | origen : 'p1, destino : 'p3 >
-)***
+  )***
 endom)
 
+
+***8
 (omod EJEMPLO is
   pr CONFIGURATION .
   pr RED .
 
-  ***(
+  var O : Oid .
+  var S : String .
+
+  op ext : Oid String -> Object .
+  eq ext(O, S) = < O : Extremo | IP : S, Estado : inactivo, centro : null > .
+
+  op cent : Oid String -> Object .
+  eq cent(O, S) = < O : Centro | IP : S, Estado : inactivo, tabla : nTabla > .
+
+  ops procE procC : Oid String -> Object .
+  eq procE(O, S) = < O : Proceso | datos : ext(n(O), S) > .
+  eq procC(O, S) = < O : Proceso | datos : cent(n(O), S) > .
+
   op init : -> Configuration .
   eq init = 
-            pro('p0, c0)
-            pro('p1, e1)
-            pro('p2, e2)
-            pro('p3, e3) 
-            can('can1, nodo('c0), nodo('e1)) .
-  )***
+            cent('c0, "ip0")
+            ext('e1, "ip1")
+            ext('e2, "ip2")
+            ext('e3, "ip3") .
 
 endom)
 
-(rew init .)
+(frew init .)
