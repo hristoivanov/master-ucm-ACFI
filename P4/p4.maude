@@ -48,7 +48,7 @@ load full-maude.maude
 
   subsort Qid < Oid .
 
-  vars O O' : Oid .
+  vars O O' O'' : Oid .
   vars B B' : Object .
   vars S S' : String .
   var  T    : Tabla .
@@ -57,12 +57,14 @@ load full-maude.maude
   vars Q Q' : Qid .
   var Ca    : Cid .
   vars Ats Ats' : AttributeSet .
+  vars MSG MSG' : Msg .
+  vars lstMsg lstMsg' : listaMsg .
 
   *** 1
   class Proceso | datos : Configuration .
 
-  *** 2
-  class Nodo | IP : String, Estado : Mode .
+  *** 2, 10, 11
+  class Nodo | IP : String, Estado : Mode, recibido : String, amigos : CjtoString .
   sort Mode .
   ops inactivo esperando activo : -> Mode [ctor] .
   op n : Oid -> Oid [ctor] .
@@ -82,10 +84,11 @@ load full-maude.maude
   subsort Msg < listaMsg .
   op nlistaMsg : -> listaMsg [ctor] .
   op _y_ : listaMsg listaMsg -> listaMsg [ctor assoc id: nlistaMsg] .
+  op insert : listaMsg Msg -> 
   sort EstadoCanal .
   ops ok error : -> EstadoCanal [ctor] .
 
-  ***6 (y pequeña parte del 7)
+  *** 6 (y pequeña parte del 7)
   msg info : Entrada -> Msg .
   rl [info1] :
      < O : Extremo | Estado : inactivo, IP : S > 
@@ -97,18 +100,53 @@ load full-maude.maude
   => < O' : Centro | tabla : insert(T, < S, O >), Estado : activo > 
      respuesta-info(O, O') .
 
-  ***7
+  *** 7
   msg respuesta-info : Oid Oid -> Msg .
   rl [respuesta-info1] :
      respuesta-info(O, O')
      < O : Extremo | Estado : esperando >
   => < O : Extremo | Estado : activo, centro : O' > .
 
+  *** 9
+  sort CjtoString . 
+  subsort String < CjtoString .
+  op nCjtoString : -> CjtoString [ctor] .
+  op __ : CjtoString CjtoString -> CjtoString [ctor assoc comm id: nCjtoString] .
+
+  *** 12
+  msg to_:_ : String String -> Msg .
   
-  ***( 
-  op can : Qid Oid Oid -> Object .
-  eq can(Q, O, O') = < Q : Canal | origen : O, destino : O', listaOrigen : nlistaMsg, listaDestino : nlistaMsg, estado : ok > .
-  )***
+  *** 13
+  msg to_:_ : Oid String -> Msg .
+  
+  *** 14
+  *** Decir orientación canales. Explicar todas las suposiciones.
+  *** El canal tiene que comu
+  rl [extremo-canal] :
+     < O  : Proceso | datos : MSG C < n(O): Extremo | Ats > >
+     < O' : Canal   | destino : O, listaDestino : lstMsg, estado : ok >
+  => < O : Proceso  | datos : C < n(O): Centro | Ats > >
+     < O' : Canal   | listaDestino : lstMsg y MSG > .
+  rl [centro-canal] :
+     < O  : Proceso | datos : MSG C < n(O): Centro | Ats > >****a quien va el mensaje? comprobarlo con el destino del canal
+     < O' : Canal   | origen : O, listaOrigen : lstMsg, estado : ok >
+  => < O : Proceso  | datos : C < n(O): Centro | Ats > >
+     < O' : Canal   | listaOrigen : lstMsg y MSG > .
+  rl [canal-extremo] :
+     < O  : Proceso | datos : C < n(O): Extremo | Ats > >
+     < O' : Canal   | destino : O, listaOrigen : MSG y lstMsg, estado : ok >
+  => < O : Proceso  | datos : MSG C < n(O): Extremo | Ats >>
+     < O' : Canal   | listaOrigen : lstMsg > .
+  *** TODO
+  rl [canal-centro] :
+     < O  : Proceso | datos : C < n(O): Centro | Ats > >
+     < O' : Canal   | origen : O, listaDestino : MSG y lstMsg, estado : ok >
+  => < O : Proceso  | datos : MSG C < n(O): Extremo | Ats >>
+     < O' : Canal   | listaOrigen : lstMsg > .
+
+
+
+
 endom)
 
 
@@ -121,14 +159,19 @@ endom)
   var S : String .
 
   op ext : Oid String -> Object .
-  eq ext(O, S) = < O : Extremo | IP : S, Estado : inactivo, centro : null > .
+  eq ext(O, S) = < O : Extremo | IP : S, Estado : inactivo, recibido : "", amigos : nCjtoString, centro : null > .
 
   op cent : Oid String -> Object .
-  eq cent(O, S) = < O : Centro | IP : S, Estado : inactivo, tabla : nTabla > .
+  eq cent(O, S) = < O : Centro | IP : S, Estado : inactivo, recibido : "", amigos : nCjtoString, tabla : nTabla > .
 
   ops procE procC : Oid String -> Object .
   eq procE(O, S) = < O : Proceso | datos : ext(n(O), S) > .
   eq procC(O, S) = < O : Proceso | datos : cent(n(O), S) > .
+
+  ***( 
+  op can : Qid Oid Oid -> Object .
+  eq can(Q, O, O') = < Q : Canal | origen : O, destino : O', listaOrigen : nlistaMsg, listaDestino : nlistaMsg, estado : ok > .
+  )***
 
   op init : -> Configuration .
   eq init = 
