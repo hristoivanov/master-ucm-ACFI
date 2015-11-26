@@ -1,46 +1,130 @@
-load model-checker.maude
-load full-maude.maude
-
 mod TABLA is
   pr CONFIGURATION .
+  pr STRING .
 
   sort Entrada .
-  op nEntrada <_,_> : String Oid -> Entrada [ctor] .
+  op <_,_> : String Oid -> Entrada [ctor] .
   sort Tabla .
   subsort Entrada < Tabla .
   op nTabla : -> Tabla [ctor] .
-  op __ : Tabla Tabla -> Tabla [ctor assoc id: nTabla] .
+  op __ : Tabla Tabla -> Tabla [ctor assoc comm id: nTabla] .
 
   op insert : Tabla Entrada -> Tabla .
-  eq insert(nTabla, E) = E nTabla .
-  eq insert(< S,_ > T, < S,_ >) = 
+  eq insert(< S, O > T, < S, O' >) = < S, O' > T .
+  eq insert(T, < S', O' >) = T < S', O' >  [owise] .
 
-  var S : String .
-  var E : Entrada .
-  var T : Tabla .
+  op delete : Tabla String -> Tabla .
+  eq delete(< S, O > T, S) = T .
+  eq delete(T, S) = T [owise] .
+
+  vars O O' : Oid .
+  vars S S' : String .
+  var  E    : Entrada .
+  vars T T' : Tabla .
+
+  ***ops auxidle auxactive : -> Oid  .
 endm 
+
+***(
+red insert( nTabla, < "aa", auxactive > ) .
+red insert( < "aa", auxidle >  < "bb", auxidle > < "cc", auxidle > < "dd", auxidle > nTabla, < "aa", auxactive > ) .
+red insert( < "aa", auxidle >  < "bb", auxidle > < "cc", auxidle > < "dd", auxidle > nTabla, < "dd", auxactive > ) .
+red insert( < "aa", auxidle >  < "bb", auxidle > < "cc", auxidle > < "dd", auxidle > nTabla, < "cc", auxactive > ) .
+red insert( < "aa", auxidle >  < "bb", auxidle > < "cc", auxidle > < "dd", auxidle > nTabla, < "rr", auxactive > ) .
+
+red delete( nTabla,  "aa" ) .
+red delete( < "aa", auxidle >  < "bb", auxidle > < "cc", auxidle > < "dd", auxidle > nTabla,  "aa" ) .
+red delete( < "aa", auxidle >  < "bb", auxidle > < "cc", auxidle > < "dd", auxidle > nTabla,  "dd" ) .
+red delete( < "aa", auxidle >  < "bb", auxidle > < "cc", auxidle > < "dd", auxidle > nTabla,  "cc" ) .
+red delete( < "aa", auxidle >  < "bb", auxidle > < "cc", auxidle > < "dd", auxidle > nTabla,  "rr" ) .
+)***
+
+load model-checker.maude
+load full-maude.maude
 
 (omod RED is
   pr QID .
+  pr TABLA .
 
-  sort Mode .
-  ops idle activo lider : -> Mode [ctor] .
+  subsort Qid < Oid .
 
+  vars O O' : Oid .
+  vars B B' : Object .
+  vars S S' : String .
+  var  T    : Tabla .
+  var  E    : Entrada .
+  var  C    : Configuration .
+  vars Q Q' : Qid .
+  var Ca    : Cid .
+  vars Ats Ats' : AttributeSet .
 
- 
-
-
+  *** 1
   class Proceso | datos : Configuration .
+
+  *** 2
   class Nodo | IP : String, Estado : Mode .
+  sort Mode .
+  ops inactivo esperando activo : -> Mode [ctor] .
+  *** Not sure .
+  ***(
+  op nodo : Object -> Object .
+  ceq nodo(B) = B' 
+    if B == < O : Proceso | datos : B' C > .
+  )***
 
+  op nodo : Configuration Oid -> Oid .
+  eq nodo(< O:Oid | datos : < O' | Ats' >, Ats > C , O) = O' .
+  *** Not sure .
+
+  *** 3
   subclass Centro < Nodo .
-  subclass Extremo < Nodo .
-  
-  class Centro | 
+  class Centro  | tabla : Tabla .
 
-  <_,_>
-    
-  
+  *** 4
+  subclass Extremo < Nodo .
+  class Extremo | centro : Oid .
+  op null : -> Oid [ctor] .
+
+  *** 5
+  class Canal   | origen : Oid, destino : Oid, listaOrigen : listaMsg, listaDestino : listaMsg, estado : EstadoCanal .
+  sort listaMsg .
+  subsort Msg < listaMsg .
+  op nlistaMsg : -> listaMsg [ctor] .
+  op _y_ : listaMsg listaMsg -> listaMsg [ctor assoc id: nlistaMsg] .
+  sort EstadoCanal .
+  ops ok error : -> EstadoCanal [ctor] .
+
+  ***6 (y pequeña parte del 7)
+  msg info : Entrada -> Msg .
+  rl [info1] :
+     < O : Extremo | Estado : inactivo, IP : S > 
+  => < O : Extremo | Estado : esperando >
+     info(< S, O >) .
+  rl [info2] :
+     info(< S, O >)
+     < O' : Centro | tabla : T >
+  => < O' : Centro | tabla : insert(T, < S, O >), Estado : activo > 
+     respuesta-info(O, O') .
+
+  ***7
+  msg respuesta-info : Oid Oid -> Msg .
+  rl [respuesta-info1] :
+     respuesta-info(O, O')
+     < O : Extremo | Estado : esperando >
+  => < O : Extremo | Estado : activo, centro : O' > .
+
+  ***8
+  ops e1 e2 e3 : -> Object .
+  eq e1 = < 'e1 : Extremo | IP : "00001", Estado : inactivo, centro : null > .
+  eq e2 = < 'e2 : Extremo | IP : "00002", Estado : inactivo, centro : null > .
+  eq e3 = < 'e3 : Extremo | IP : "00003", Estado : inactivo, centro : null > .
+  op c0 : -> Object .
+  eq c0 = < 'c0 : Centro | IP : "00000", Estado : inactivo, tabla : nTabla > .
+  op pro : Qid Object -> Object . 
+  eq pro(Q, B) = < Q : Proceso | datos : B > . 
+  op can : Qid Oid Oid -> Object .
+  eq can(Q, O, O') = < Q : Canal | origen : O, destino : O', listaOrigen : nlistaMsg, listaDestino : nlistaMsg, estado : ok > .
+
 ***(
 op nodo 
 
@@ -48,9 +132,23 @@ op nodo
 < ’p2 : Proceso | datos : < nodo('p2) : NodoExtremo | ... > >
 < ’p3 : Proceso | datos : < nodo('p3) : NodoExtremo | ... > to nodo('p1) : hola >
 < 'c : Canal | origen : 'p1, destino : 'p3 >
-)
-
-  class Proceso | datos : Configuration .
-  class Nodo | IP : String, Estado : Mode .
+)***
 endom)
 
+(omod EJEMPLO is
+  pr CONFIGURATION .
+  pr RED .
+
+  ***(
+  op init : -> Configuration .
+  eq init = 
+            pro('p0, c0)
+            pro('p1, e1)
+            pro('p2, e2)
+            pro('p3, e3) 
+            can('can1, nodo('c0), nodo('e1)) .
+  )***
+
+endom)
+
+(rew init .)
