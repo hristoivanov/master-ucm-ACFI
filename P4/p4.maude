@@ -48,7 +48,7 @@ load full-maude.maude
 
   subsort Qid < Oid .
 
-  vars O O' O'' : Oid .
+  vars O O' O'' O''' : Oid .
   vars B B' : Object .
   vars S S' : String .
   var  T    : Tabla .
@@ -59,6 +59,7 @@ load full-maude.maude
   vars Ats Ats' : AttributeSet .
   vars MSG MSG' : Msg .
   vars lstMsg lstMsg' : listaMsg .
+  vars N N' : Nodo .
 
   *** 1
   class Proceso | datos : Configuration .
@@ -84,7 +85,6 @@ load full-maude.maude
   subsort Msg < listaMsg .
   op nlistaMsg : -> listaMsg [ctor] .
   op _y_ : listaMsg listaMsg -> listaMsg [ctor assoc id: nlistaMsg] .
-  op insert : listaMsg Msg -> 
   sort EstadoCanal .
   ops ok error : -> EstadoCanal [ctor] .
 
@@ -122,29 +122,15 @@ load full-maude.maude
   *** 14
   *** Decir orientación canales. Explicar todas las suposiciones.
   *** El canal tiene que comu
-  rl [extremo-canal] :
-     < O  : Proceso | datos : MSG C < n(O): Extremo | Ats > >
-     < O' : Canal   | destino : O, listaDestino : lstMsg, estado : ok >
-  => < O : Proceso  | datos : C < n(O): Centro | Ats > >
-     < O' : Canal   | listaDestino : lstMsg y MSG > .
-  rl [centro-canal] :
-     < O  : Proceso | datos : MSG C < n(O): Centro | Ats > >****a quien va el mensaje? comprobarlo con el destino del canal
-     < O' : Canal   | origen : O, listaOrigen : lstMsg, estado : ok >
-  => < O : Proceso  | datos : C < n(O): Centro | Ats > >
-     < O' : Canal   | listaOrigen : lstMsg y MSG > .
-  rl [canal-extremo] :
-     < O  : Proceso | datos : C < n(O): Extremo | Ats > >
-     < O' : Canal   | destino : O, listaOrigen : MSG y lstMsg, estado : ok >
-  => < O : Proceso  | datos : MSG C < n(O): Extremo | Ats >>
-     < O' : Canal   | listaOrigen : lstMsg > .
-  *** TODO
-  rl [canal-centro] :
-     < O  : Proceso | datos : C < n(O): Centro | Ats > >
-     < O' : Canal   | origen : O, listaDestino : MSG y lstMsg, estado : ok >
-  => < O : Proceso  | datos : MSG C < n(O): Extremo | Ats >>
-     < O' : Canal   | listaOrigen : lstMsg > .
+  
 
 
+  
+  rl [extremo-canal1] : 
+     < O  : Proceso | datos : MSG C < n(O) : Extremo | Ats > >
+     < O' : Canal | origen : O, listaOrigen : lstMsg, estado : ok >
+  => < O  : Proceso | datos : C < n(O) : Extremo | Ats > >
+     < O' : Canal | listaOrigen : MSG y lstMsg > .
 
 
 endom)
