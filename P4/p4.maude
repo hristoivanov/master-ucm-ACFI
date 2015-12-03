@@ -230,7 +230,7 @@ endom)
   pr RED .
   vars O O' O'' : Oid .
   var cStr : CjtoString .
-
+  var C C' : Configuration .
   var S : String .
 
   op ext : Oid String CjtoString -> Object .
@@ -254,6 +254,7 @@ endom)
             ext('e3, "ip3",  nCjtoString) .
 
   op init21 : -> Configuration .
+  *** Note. Expandir.
   eq init21 = 
              procC('p0, "0000", nCjtoString)
              procE('p1, "1111", "2222")
@@ -261,6 +262,10 @@ endom)
              can('c1, 'p1, 'p0)
              can('c2, 'p2, 'p0) .
 
+  op comparaConfs : Configuration Configuration -> Bool .
+  eq comparaConfs(C, C') = numObjetos(C) == numObjetos(C') .
 endom)
 
 (frew init21 .)
+(search init21 =>* C:Configuration s.t. not comparaConfs(init21, C:Configuration) .)
+
