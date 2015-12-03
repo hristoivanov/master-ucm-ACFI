@@ -224,7 +224,7 @@ load full-maude.maude
 endom)
 
 
-***8 y 21
+***8 y 21 y 22
 (omod EJEMPLO is
   pr CONFIGURATION .
   pr RED .
@@ -266,6 +266,44 @@ endom)
   eq comparaConfs(C, C') = numObjetos(C) == numObjetos(C') .
 endom)
 
+*** 23
+(omod PROPS is
+  pr SATISFACTION .
+  pr EJEMPLO .
+  subsort Configuration < State .
+
+  vars O O' O'' O''' : Oid .  
+  vars S S' : String .
+  var N : Nodo .
+  vars C C' C'' : Configuration .
+  var cStr : CjtoString .
+
+  op existeNodo : String -> Prop [ctor] .
+  eq < O : Proceso | datos : C' < O' : Nodo | IP : S > > C |= existeNodo(S) = true .
+  op esAmigoDe : Oid Oid -> Prop [ctor] .
+  eq < O : Proceso | datos : C' < O' : Nodo | amigos : S cStr > > < O'' : Proceso | datos : C'' < O''' : Nodo | IP : S > > C |= esAmigoDe(O', O''') = true .       
+  *** Centrarnos solo en to S : S .
+  *** Mirar en los Nodos y en los dos lados de los canales.
+  op existeMensaje : String -> Prop [ctor] .
+  eq < O : Proceso | datos : (to S : S') C' < O' : Centro | > > C |= existeMensaje(S) = true .
+  eq < O : Proceso | datos : (respuesta-info(n(O''), O')) C' < O' : Centro | > > < O'' : Proceso | datos : < n(O'') : Nodo | IP : S > >  C |= existeMensaje(S) = true . 
+
+endom)
+
+(omod CHECK is
+  pr PROPS .
+  pr MODEL-CHECKER .
+  pr LTL-SIMPLIFIER .
+endom)
+
+
 (frew init21 .)
 (search init21 =>* C:Configuration s.t. not comparaConfs(init21, C:Configuration) .)
+
+*** 23(a
+(red modelCheck(init21, existeNodo("1111")) .)
+*** 23(b
+(red modelCheck(init21, esAmigoDe( n('p1), n('p2)  )) .)
+*** 23(c
+(red modelCheck(init21, <> existeMensaje("2222")) .)
 
