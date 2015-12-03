@@ -49,17 +49,18 @@ load full-maude.maude
   subsort Qid < Oid .
 
   vars O O' O'' O''' : Oid .
-  vars B B' : Object .
-  vars S S' : String .
-  var  T    : Tabla .
-  var  E    : Entrada .
-  var  C    : Configuration .
-  vars Q Q' : Qid .
-  var Ca    : Cid .
+  vars B B'     : Object .
+  vars S S' S'' : String .
+  var  T        : Tabla .
+  var  E        : Entrada .
+  var  C        : Configuration .
+  vars Q Q'     : Qid .
+  var Ca        : Cid .
   vars Ats Ats' : AttributeSet .
   vars MSG MSG' : Msg .
   vars lstMsg lstMsg' : listaMsg .
   vars N N' : Nodo .
+  var cStr : CjtoString .
 
   *** 1
   class Proceso | datos : Configuration .
@@ -120,52 +121,153 @@ load full-maude.maude
   msg to_:_ : Oid String -> Msg .
   
   *** 14
-  *** Decir orientación canales. Explicar todas las suposiciones.
-  *** El canal tiene que comu
-  
+  *** Orientación canal:  
+  ***     Centro   -> siempre es 'destino'
+  ***     Extremos -> siempre son el 'origen'
+  ***     El 'origen' siempre inserta Msg's en la 'listaOrigen'. Los mensajes de esta lista acaban en el 'destino'.
+  ***     El 'destino' siempre inserta Msg's en la 'listaDestino' Los mensajes de esta lista acaban en el 'origen'.
+  *** Para el sort 'listaMsg':
+  ***     Insertar(MSG, lstMsg) = MSG y lstMsg .
+  ***     Extraer(lstMsg y MSG) = lstMsg .
 
+  op aux : Oid Cid AttributeSet -> Object .
+  eq aux(O, Ca, Ats) = < O : Ca | Ats > .
 
-  
-  rl [extremo-canal1] : 
-     < O  : Proceso | datos : MSG C < n(O) : Extremo | Ats > >
+  rl [extremo-canal] : 
+     < O  : Proceso | datos : (to S : S') C aux(n(O), Extremo, Ats) >
      < O' : Canal | origen : O, listaOrigen : lstMsg, estado : ok >
   => < O  : Proceso | datos : C < n(O) : Extremo | Ats > >
-     < O' : Canal | listaOrigen : MSG y lstMsg > .
+     < O' : Canal | listaOrigen : (to S : S') y lstMsg > .
+
+  rl [canal-extremo] : 
+     < O  : Proceso | datos : C aux(n(O), Extremo, Ats) >
+     < O' : Canal | origen : O, listaDestino : lstMsg y MSG, estado : ok >
+  => < O  : Proceso | datos : MSG C < n(O) : Extremo | Ats > >
+     < O' : Canal | listaDestino : lstMsg > .
+
+  rl [canal-centro] : 
+     < O  : Proceso | datos : C aux(n(O), Centro, Ats) >
+     < O' : Canal | destino : O, listaOrigen : lstMsg y MSG, estado : ok >
+  => < O  : Proceso | datos : MSG C < n(O) : Centro | Ats > >
+     < O' : Canal | listaOrigen : lstMsg > .
+
+  rl [centro-canal] : 
+     < O  : Proceso | datos : (to n(O'') : S) C aux(n(O), Centro, Ats) >
+     < O' : Canal | destino : O, origen : O'', listaDestino : lstMsg, estado : ok >
+  => < O  : Proceso | datos : C < n(O) : Centro | Ats > >
+     < O' : Canal | listaDestino : (to n(O'') : S) y lstMsg > .
+
+  rl [info-extremo-canal] :
+     < O  : Proceso | datos : info(< S, n(O) >) C aux(n(O), Extremo, Ats) >  
+     < O' : Canal | origen : O, listaOrigen : lstMsg, estado : ok >
+  => < O  : Proceso | datos : C aux(n(O), Extremo, Ats) >
+     < O' : Canal | origen : O, listaOrigen : info(< S, n(O) >) y lstMsg, estado : ok > .
+
+  rl [respuesta-info-centro-canal] :
+     < O  : Proceso | datos : respuesta-info(O'', n(O)) C aux(n(O), Centro, Ats) >
+     < O' : Canal | destino : O, listaDestino : lstMsg, estado : ok >
+  => < O  : Proceso | datos : C aux(n(O), Centro, Ats) >
+     < O' : Canal | destino : O, listaDestino : respuesta-info(O'', n(O)) y lstMsg, estado : ok > .
+
+  *** 15
+  *** Pospuesto hasta acabar el 21 
+
+  *** 16
+  rl [saludar-amigo] :
+     < O : Extremo | Estado : activo, amigos : S cStr  > 
+  => < O : Extremo | amigos : cStr >
+     (to S : "hola") .
+
+  *** 17
+  rl [trasformar] :
+     (to S : S') 
+     < O : Centro | IP : S'', tabla : < S, O' > T, Estado : activo >
+  => (to O' : S') 
+     < O : Centro | > .
+
+  *** 18
+  rl [recibir-centro] : 
+     (to S : S')
+     < O : Centro | IP : S, Estado : activo, recibido : S'' >
+  => < O : Centro | IP : S, Estado : activo, recibido : S'' + S' > .
+
+  rl [recibir-extremo] : 
+     (to O : S')
+     < O : Extremo | Estado : activo, recibido : S >
+  => < O : Extremo | Estado : activo, recibido : S + S' > .
+
+  *** 19
+  op nConfiguration : -> Configuration [ctor] .
+  op numObjetos : Configuration -> Nat .
+  eq numObjetos(nConfiguration) = 0 .
+  eq numObjetos(B C) = s(numObjetos(C)) .
+  eq numObjetos(MSG C) = numObjetos(C) . 
+
+  *** 20 y 21
+ 
+
+
+  ***(
+  class Nodo    | IP : String, Estado : Mode, recibido : String, amigos : CjtoString .
+  class Extremo | centro : Oid . 
+  class Centro  | tabla : Tabla .
+
+  rl [info1] :
+     < O : Extremo | Estado : inactivo, IP : S > 
+  => < O : Extremo | Estado : esperando >
+     info(< S, O >) .
+  rl [info2] :
+     info(< S, O >)
+     < O' : Centro | tabla : T >
+  => < O' : Centro | tabla : insert(T, < S, O >), Estado : activo > 
+     respuesta-info(O, O') .
+  )  
 
 
 endom)
 
 
-***8
+***8 y 21
 (omod EJEMPLO is
   pr CONFIGURATION .
   pr RED .
+  vars O O' O'' : Oid .
+  var cStr : CjtoString .
 
-  var O : Oid .
   var S : String .
 
-  op ext : Oid String -> Object .
-  eq ext(O, S) = < O : Extremo | IP : S, Estado : inactivo, recibido : "", amigos : nCjtoString, centro : null > .
+  op ext : Oid String CjtoString -> Object .
+  eq ext(O, S, cStr) = < O : Extremo | IP : S, Estado : inactivo, recibido : "", amigos : cStr, centro : null > .
 
-  op cent : Oid String -> Object .
-  eq cent(O, S) = < O : Centro | IP : S, Estado : inactivo, recibido : "", amigos : nCjtoString, tabla : nTabla > .
+  op cent : Oid String CjtoString -> Object .
+  eq cent(O, S, cStr) = < O : Centro | IP : S, Estado : inactivo, recibido : "", amigos : cStr, tabla : nTabla > .
 
-  ops procE procC : Oid String -> Object .
-  eq procE(O, S) = < O : Proceso | datos : ext(n(O), S) > .
-  eq procC(O, S) = < O : Proceso | datos : cent(n(O), S) > .
+  ops procE procC : Oid String CjtoString -> Object .
+  eq procE(O, S, cStr) = < O : Proceso | datos : ext(n(O), S, cStr) > .
+  eq procC(O, S, cStr) = < O : Proceso | datos : cent(n(O), S, cStr) > .
+ 
+  op can : Oid Oid Oid -> Object .
+  eq can(O, O', O'') = < O : Canal | origen : O', destino : O'', listaOrigen : nlistaMsg, listaDestino : nlistaMsg, estado : ok > .
 
-  ***( 
-  op can : Qid Oid Oid -> Object .
-  eq can(Q, O, O') = < Q : Canal | origen : O, destino : O', listaOrigen : nlistaMsg, listaDestino : nlistaMsg, estado : ok > .
-  )***
+  op init8 : -> Configuration .
+  eq init8 = 
+            cent('c0, "ip0", nCjtoString)
+            ext('e1, "ip1",  nCjtoString)
+            ext('e2, "ip2",  nCjtoString)
+            ext('e3, "ip3",  nCjtoString) .
 
-  op init : -> Configuration .
-  eq init = 
-            cent('c0, "ip0")
-            ext('e1, "ip1")
-            ext('e2, "ip2")
-            ext('e3, "ip3") .
+  op init21 : -> Configuration .
+  eq init21 = 
+             procC('p0, "0000", nCjtoString)
+             procE('p1, "1111", "2222")
+             procE('p2, "2222", "1111")
+             can('c1, 'p1, 'p0)
+             can('c2, 'p2, 'p0) .
 
 endom)
 
-(frew init .)
+
+(red  < 'p1 : Proceso | datos :(info(< "1111",n('p1)>)< n('p1): Extremo | Estado : esperando,IP : "1111",amigos : "2222",centro : null,recibido : "" >)>  
+      < 'c1 : Canal | destino : 'p0,estado : ok,listaDestino : nlistaMsg,listaOrigen : nlistaMsg,origen : 'p1 > .)
+
+(frew init21 .)
