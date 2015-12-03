@@ -130,44 +130,41 @@ load full-maude.maude
   ***     Insertar(MSG, lstMsg) = MSG y lstMsg .
   ***     Extraer(lstMsg y MSG) = lstMsg .
 
-  op aux : Oid Cid AttributeSet -> Object .
-  eq aux(O, Ca, Ats) = < O : Ca | Ats > .
-
   rl [extremo-canal] : 
-     < O  : Proceso | datos : (to S : S') C aux(n(O), Extremo, Ats) >
+     < O  : Proceso | datos : (to S : S') C < n(O) : Extremo | > >
      < O' : Canal | origen : O, listaOrigen : lstMsg, estado : ok >
-  => < O  : Proceso | datos : C < n(O) : Extremo | Ats > >
+  => < O  : Proceso | datos : C < n(O) : Extremo | > >
      < O' : Canal | listaOrigen : (to S : S') y lstMsg > .
 
   rl [canal-extremo] : 
-     < O  : Proceso | datos : C aux(n(O), Extremo, Ats) >
+     < O  : Proceso | datos : C < n(O) : Extremo | > >
      < O' : Canal | origen : O, listaDestino : lstMsg y MSG, estado : ok >
-  => < O  : Proceso | datos : MSG C < n(O) : Extremo | Ats > >
+  => < O  : Proceso | datos : MSG C < n(O) : Extremo | > >
      < O' : Canal | listaDestino : lstMsg > .
 
   rl [canal-centro] : 
-     < O  : Proceso | datos : C aux(n(O), Centro, Ats) >
+     < O  : Proceso | datos : C < n(O) : Centro | > >
      < O' : Canal | destino : O, listaOrigen : lstMsg y MSG, estado : ok >
-  => < O  : Proceso | datos : MSG C < n(O) : Centro | Ats > >
+  => < O  : Proceso | datos : MSG C < n(O) : Centro | > >
      < O' : Canal | listaOrigen : lstMsg > .
 
   rl [centro-canal] : 
-     < O  : Proceso | datos : (to n(O'') : S) C aux(n(O), Centro, Ats) >
+     < O  : Proceso | datos : (to n(O'') : S) C < n(O) : Centro | > >
      < O' : Canal | destino : O, origen : O'', listaDestino : lstMsg, estado : ok >
-  => < O  : Proceso | datos : C < n(O) : Centro | Ats > >
+  => < O  : Proceso | datos : C < n(O) : Centro | > >
      < O' : Canal | listaDestino : (to n(O'') : S) y lstMsg > .
 
   rl [info-extremo-canal] :
-     < O  : Proceso | datos : info(< S, n(O) >) C aux(n(O), Extremo, Ats) >  
+     < O  : Proceso | datos : info(< S, n(O) >) C < n(O) : Extremo | > >  
      < O' : Canal | origen : O, listaOrigen : lstMsg, estado : ok >
-  => < O  : Proceso | datos : C aux(n(O), Extremo, Ats) >
+  => < O  : Proceso | datos : C < n(O) : Extremo | > >
      < O' : Canal | origen : O, listaOrigen : info(< S, n(O) >) y lstMsg, estado : ok > .
 
   rl [respuesta-info-centro-canal] :
-     < O  : Proceso | datos : respuesta-info(O'', n(O)) C aux(n(O), Centro, Ats) >
-     < O' : Canal | destino : O, listaDestino : lstMsg, estado : ok >
-  => < O  : Proceso | datos : C aux(n(O), Centro, Ats) >
-     < O' : Canal | destino : O, listaDestino : respuesta-info(O'', n(O)) y lstMsg, estado : ok > .
+     < O  : Proceso | datos : respuesta-info(n(O''), n(O)) C < n(O) : Centro | > >
+     < O' : Canal | destino : O, origen : O'', listaDestino : lstMsg, estado : ok >
+  => < O  : Proceso | datos : C < n(O) : Centro | > >
+     < O' : Canal | destino : O, listaDestino : respuesta-info(n(O''), n(O)) y lstMsg, estado : ok > .
 
   *** 15
   *** Pospuesto hasta acabar el 21 
@@ -265,9 +262,5 @@ endom)
              can('c2, 'p2, 'p0) .
 
 endom)
-
-
-(red  < 'p1 : Proceso | datos :(info(< "1111",n('p1)>)< n('p1): Extremo | Estado : esperando,IP : "1111",amigos : "2222",centro : null,recibido : "" >)>  
-      < 'c1 : Canal | destino : 'p0,estado : ok,listaDestino : nlistaMsg,listaOrigen : nlistaMsg,origen : 'p1 > .)
 
 (frew init21 .)
