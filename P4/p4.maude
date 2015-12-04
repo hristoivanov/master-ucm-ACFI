@@ -167,10 +167,11 @@ load full-maude.maude
      < O' : Canal | destino : O, listaDestino : respuesta-info(n(O''), n(O)) y lstMsg, estado : ok > .
 
   *** 15
-  ***(
+
   rl [romper-canal] :
      < O : Canal | estado : ok >
   => < O : Canal | estado : error > .
+  ***(
   )
 
   *** 16
@@ -198,13 +199,10 @@ load full-maude.maude
   => < O : Extremo | Estado : activo, recibido : S + S' > .
 
   *** 19
-  op nConfiguration : -> Configuration [ctor] .
   op numObjetos : Configuration -> Nat .
-  eq numObjetos(nConfiguration) = 0 .
   eq numObjetos(B C) = 1 + numObjetos(C) .
   eq numObjetos(MSG C) = numObjetos(C) .
   eq numObjetos(C) = 0 [owise] .  
-  ***eq numObjetos(None) = 0 . 
 
   *** 20 y 21
  
@@ -285,6 +283,7 @@ endom)
   vars C C' C'' : Configuration .
   var cStr : CjtoString .
   var lstMsg : listaMsg .
+  vars MSG MSG' : Msg .
 
   op existeNodo : String -> Prop [ctor] .
   eq < O : Proceso | datos : C' < O' : Nodo | IP : S > > C |= existeNodo(S) = true .
@@ -295,12 +294,27 @@ endom)
   eq < O : Canal | listaOrigen : lstMsg y (to S : S') > C |= existeMensaje(S) = true .
   eq < O : Canal | listaDestino : lstMsg y (to S : S') > C |= existeMensaje(S) = true .
 
-  ***op numNodosIgualA : Nat C -> Prop [ctor] . 
-  ***eq numObjetos(C) == NUM |= numNodosIgualA(NUM, C) = true . 
+  op numNodos : Configuration -> Nat . 
+  eq numNodos(< O : Proceso | datos : < O' : Nodo | > C' > C) = 1 + numNodos(C) .
+  eq numNodos(MSG C) = numNodos(C) . 
+  eq numNodos(C) = 0 [owise] .
+
+  op numNodosIgualA : Nat -> Prop [ctor] . 
+  eq C |= numNodosIgualA( NUM ) = numNodos(C) == NUM .
+
+  op numExtremos : Configuration -> Nat . 
+  eq numExtremos(< O : Proceso | datos : < O' : Extremo | > C' > C) = 1 + numExtremos(C) .
+  eq numExtremos(MSG C) = numExtremos(C) . 
+  eq numExtremos(C) = 0 [owise] .
+
+  op numExtremosIgualA : Nat -> Prop [ctor] . 
+  eq C |= numExtremosIgualA( NUM ) = numExtremos(C) == NUM .
+
+
   
   op canalEstaBien : Oid -> Prop [ctor] .
   eq < O' : Canal | estado : ok >  C |= canalEstaBien(O') = true .
-  
+	
 endom)
 
 (omod CHECK is
@@ -320,8 +334,18 @@ endom)
 *** 23(c
 (red modelCheck(init21, <> existeMensaje("2222")) .)
 *** 23(d
-***(red modelCheck(init21, ) .)
+(red modelCheck(init21, numNodosIgualA(3)) .)
 *** 23(e
-***(red modelCheck(init21, ) .)
+(red modelCheck(init21, numExtremosIgualA(2)) .)
 *** 23(f
 (red modelCheck(init21, canalEstaBien('c1)) .)
+
+*** 24(a
+(red modelCheck(init21, <> numNodosIgualA(3) -> [] numNodosIgualA(3) ) .)
+*** La linea superior da True si alguna vez se cumple que numNodosIgualA(x) -> siempre numNodosIgualA(x) 
+*** 24(b
+(red modelCheck(init21, existeNodo("1111") /\ esAmigoDe(n('p2),n('p1)) -> <> existeMensaje("1111")) .)
+*** Mientras la regla de "romper-canal" este comentada un nodo amigo en algun momento tendra un mensaje en la configuracion
+*** 24(c
+(red modelCheck(init21, []( existeMensaje("1111") -> <> ~ existeMensaje("1111"))   ) .)
+*** Si alguna vez existio un mensaje a un nodo quiere decir que en algun momento el mensaje se borrara y desaparecera de mensajes
