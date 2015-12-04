@@ -167,7 +167,11 @@ load full-maude.maude
      < O' : Canal | destino : O, listaDestino : respuesta-info(n(O''), n(O)) y lstMsg, estado : ok > .
 
   *** 15
-  *** Pospuesto hasta acabar el 21 
+  ***(
+  rl [romper-canal] :
+     < O : Canal | estado : ok >
+  => < O : Canal | estado : error > .
+  )
 
   *** 16
   rl [saludar-amigo] :
@@ -197,8 +201,10 @@ load full-maude.maude
   op nConfiguration : -> Configuration [ctor] .
   op numObjetos : Configuration -> Nat .
   eq numObjetos(nConfiguration) = 0 .
-  eq numObjetos(B C) = s(numObjetos(C)) .
-  eq numObjetos(MSG C) = numObjetos(C) . 
+  eq numObjetos(B C) = 1 + numObjetos(C) .
+  eq numObjetos(MSG C) = numObjetos(C) .
+  eq numObjetos(C) = 0 [owise] .  
+  ***eq numObjetos(None) = 0 . 
 
   *** 20 y 21
  
@@ -272,22 +278,29 @@ endom)
   pr EJEMPLO .
   subsort Configuration < State .
 
+  var NUM : Nat .
   vars O O' O'' O''' : Oid .  
   vars S S' : String .
   var N : Nodo .
   vars C C' C'' : Configuration .
   var cStr : CjtoString .
+  var lstMsg : listaMsg .
 
   op existeNodo : String -> Prop [ctor] .
   eq < O : Proceso | datos : C' < O' : Nodo | IP : S > > C |= existeNodo(S) = true .
   op esAmigoDe : Oid Oid -> Prop [ctor] .
   eq < O : Proceso | datos : C' < O' : Nodo | amigos : S cStr > > < O'' : Proceso | datos : C'' < O''' : Nodo | IP : S > > C |= esAmigoDe(O', O''') = true .       
-  *** Centrarnos solo en to S : S .
-  *** Mirar en los Nodos y en los dos lados de los canales.
   op existeMensaje : String -> Prop [ctor] .
   eq < O : Proceso | datos : (to S : S') C' < O' : Centro | > > C |= existeMensaje(S) = true .
-  eq < O : Proceso | datos : (respuesta-info(n(O''), O')) C' < O' : Centro | > > < O'' : Proceso | datos : < n(O'') : Nodo | IP : S > >  C |= existeMensaje(S) = true . 
+  eq < O : Canal | listaOrigen : lstMsg y (to S : S') > C |= existeMensaje(S) = true .
+  eq < O : Canal | listaDestino : lstMsg y (to S : S') > C |= existeMensaje(S) = true .
 
+  ***op numNodosIgualA : Nat C -> Prop [ctor] . 
+  ***eq numObjetos(C) == NUM |= numNodosIgualA(NUM, C) = true . 
+  
+  op canalEstaBien : Oid -> Prop [ctor] .
+  eq < O' : Canal | estado : ok >  C |= canalEstaBien(O') = true .
+  
 endom)
 
 (omod CHECK is
@@ -296,7 +309,7 @@ endom)
   pr LTL-SIMPLIFIER .
 endom)
 
-
+(red numObjetos(init21) .)
 (frew init21 .)
 (search init21 =>* C:Configuration s.t. not comparaConfs(init21, C:Configuration) .)
 
@@ -306,4 +319,9 @@ endom)
 (red modelCheck(init21, esAmigoDe( n('p1), n('p2)  )) .)
 *** 23(c
 (red modelCheck(init21, <> existeMensaje("2222")) .)
-
+*** 23(d
+***(red modelCheck(init21, ) .)
+*** 23(e
+***(red modelCheck(init21, ) .)
+*** 23(f
+(red modelCheck(init21, canalEstaBien('c1)) .)
