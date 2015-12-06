@@ -167,11 +167,10 @@ load full-maude.maude
      < O' : Canal | destino : O, listaDestino : respuesta-info(n(O''), n(O)) y lstMsg, estado : ok > .
 
   *** 15
-
+  ***(
   rl [romper-canal] :
      < O : Canal | estado : ok >
-  => < O : Canal | estado : error > .
-  ***(
+  => < O : Canal | estado : error > . 
   )
 
   *** 16
@@ -204,31 +203,9 @@ load full-maude.maude
   eq numObjetos(MSG C) = numObjetos(C) .
   eq numObjetos(C) = 0 [owise] .  
 
-  *** 20 y 21
- 
-
-
-  ***(
-  class Nodo    | IP : String, Estado : Mode, recibido : String, amigos : CjtoString .
-  class Extremo | centro : Oid . 
-  class Centro  | tabla : Tabla .
-
-  rl [info1] :
-     < O : Extremo | Estado : inactivo, IP : S > 
-  => < O : Extremo | Estado : esperando >
-     info(< S, O >) .
-  rl [info2] :
-     info(< S, O >)
-     < O' : Centro | tabla : T >
-  => < O' : Centro | tabla : insert(T, < S, O >), Estado : activo > 
-     respuesta-info(O, O') .
-  )  
-
-
 endom)
 
-
-***8 y 21 y 22
+***8, 20 y 22
 (omod EJEMPLO is
   pr CONFIGURATION .
   pr RED .
@@ -243,6 +220,7 @@ endom)
   op cent : Oid String CjtoString -> Object .
   eq cent(O, S, cStr) = < O : Centro | IP : S, Estado : inactivo, recibido : "", amigos : cStr, tabla : nTabla > .
 
+  *** 20
   ops procE procC : Oid String CjtoString -> Object .
   eq procE(O, S, cStr) = < O : Proceso | datos : ext(n(O), S, cStr) > .
   eq procC(O, S, cStr) = < O : Proceso | datos : cent(n(O), S, cStr) > .
@@ -325,6 +303,7 @@ endom)
 
 (red numObjetos(init21) .)
 (frew init21 .)
+*** 21
 (search init21 =>* C:Configuration s.t. not comparaConfs(init21, C:Configuration) .)
 
 *** 23(a
@@ -349,3 +328,44 @@ endom)
 *** 24(c
 (red modelCheck(init21, []( existeMensaje("1111") -> <> ~ existeMensaje("1111"))   ) .)
 *** Si alguna vez existio un mensaje a un nodo quiere decir que en algun momento el mensaje se borrara y desaparecera de mensajes
+
+***(
+  Dado nuestro codigo un Nodo Extremo no tiene forma de saber quien ha sido
+  el nodo extremo que le ha mandado el mensaje "hola"
+  
+  Por ejemplo
+  Dada la siguiente topologia:
+  
+  Ext1 |--- canal1 ---|centro|--- canal2 ---| Ext2
+  
+  Si el Ext1 'saluda' al Ext2 en el centro el mensaje se convertira de un to S : S'
+  a un to O : S con lo cual al Ext2 le llega un mensaje con su Oid y "hola". No tiene
+  forma de responder (con nuestro codigo) a su amigo.
+  
+  Seria necesario crear un nuevo tipo de mensaje " to O : S from S' " que 
+  fuera enviado del centro al extremo cuando recibiera un mensaje "hola" 
+  (o cualquier otro mensaje para generalizar) del otro extremo amigo. 
+  En este mensaje iria su Oid, el "hola" y la IP del nodo extremo amigo
+  que saluda (o que envia cualquier tipo de mensaje).
+
+  Con este nuevo tipo de mensaje se podrian crear unas reglas que:
+  
+  - Dado el centro y un mensaje de tipo to S : S'
+  cree un mensaje mirando en su tabla de ips de tipo to O : S from S' 
+  (donde el S del primer mensaje fuera igual al S' del segundo)
+  Y lo envie hacie el nodo extremo correspondiente.
+  
+  - Dado un nodo extremo que reciba este tipo de mensaje (to O : S from S')
+  Introduzca en el canal que va al centro un mensaje de tipo to S : S'
+  (donde el S' del primer mensaje fuera igual al S del segundo)
+  
+  De esta forma cualquier nodo extremo respondería a cualquier mensaje que le
+  llegara del centro
+  
+  Además de todo lo anterior para que el Extremo sepa a quien debe responder
+  también sería necesario crear una tabla en cada nodo de Mensajes enviados
+  de tal forma que cuando se enviase una mensaje se almacenara la IP del nodo
+  al que se envia en la tabla. Asi cuando recibiera el mensaje de respuesta
+  pudiera eliminarlo de la tabla de enviados y NO responder al mensaje evitando
+  asi el bucle infinito.
+)
