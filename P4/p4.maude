@@ -342,30 +342,47 @@ endom)
   a un to O : S con lo cual al Ext2 le llega un mensaje con su Oid y "hola". No tiene
   forma de responder (con nuestro codigo) a su amigo.
   
-  Seria necesario crear un nuevo tipo de mensaje " to O : S from S' " que 
+  Seria necesario crear un mensaje de tipo " to S : S' from S'' IDMsg " que
+  fuera enviado desde los extremos hacia el centro, de tal forma que S fuera la 
+  IP destino, S' el mensaje y S'' la IP origen. De esta forma el nodo central
+  tambien tendria que crear un nuevo tipo de mensaje " to O : S from S' " que 
   fuera enviado del centro al extremo cuando recibiera un mensaje "hola" 
   (o cualquier otro mensaje para generalizar) del otro extremo amigo. 
   En este mensaje iria su Oid, el "hola" y la IP del nodo extremo amigo
   que saluda (o que envia cualquier tipo de mensaje).
 
-  Con este nuevo tipo de mensaje se podrian crear unas reglas que:
+  Con este nuevo tipo de mensajes se podrian crear unas reglas que:
   
-  - Dado el centro y un mensaje de tipo to S : S'
+  - Dado el centro y un mensaje de tipo to S : S' from S''
   cree un mensaje mirando en su tabla de ips de tipo to O : S from S' 
-  (donde el S del primer mensaje fuera igual al S' del segundo)
+  (donde el S'' del primer mensaje fuera igual al S' del segundo)
   Y lo envie hacie el nodo extremo correspondiente.
   
   - Dado un nodo extremo que reciba este tipo de mensaje (to O : S from S')
-  Introduzca en el canal que va al centro un mensaje de tipo to S : S'
-  (donde el S' del primer mensaje fuera igual al S del segundo)
+  Introduzca en el canal que va al centro un mensaje de tipo to S : S' from S''
+  (donde el S' del primer mensaje fuera igual al S del segundo e indicase el origen con S'')
   
   De esta forma cualquier nodo extremo respondería a cualquier mensaje que le
   llegara del centro
   
   Además de todo lo anterior para que el Extremo sepa a quien debe responder
-  también sería necesario crear una tabla en cada nodo de Mensajes enviados
-  de tal forma que cuando se enviase una mensaje se almacenara la IP del nodo
-  al que se envia en la tabla. Asi cuando recibiera el mensaje de respuesta
-  pudiera eliminarlo de la tabla de enviados y NO responder al mensaje evitando
-  asi el bucle infinito.
+  también sería necesario que cada Nodo tengar una tabla 'Tabla de mensaje/saludos enviados'. 
+  En la que insertarán al enviar el primer mensaje y de la que borraran al 
+  recibir el último mensaje descrito.
+  Las entradas de dicha tabla pueden tener este formato: < IP Destino, Mensaje > 
+  
+  Seria necesario cambiar los mensajes de los extremos por to 'IP Destino' : 'Mensaje' from 'IP Origen' 'ID Mensaje' 
+  donde el ID Mensaje: Los extremos tendrán un atributo de tipo Nat.
+  Este campo tomará el valor de ese atributo. Después de enviar un
+  mensaje de saludo(los mensajes de repuesta no cambiaran el valor)
+  ese atributo será incrementado.
+  
+  Ahora el mensaje del centro seria to 'Oid Destino' : 'Mensaje' from 'IP Origen' 'ID Mensaje'  
+  de tal forma que el nodo extremo correspondiente al 'Oid Destino' respondiera con
+  to 'IP Destino' : 'Mensaje' 'ID Mensaje' cuyo 'IDMensaje' seria identico al anterior.
+  Y el centro volveria a crear un mensaje de tipo to 'Oid Destino' : 'Mensaje' 'ID Mensaje'
+  cambiando el Oid.
+  
+  Con todo esto evitariamos; los bucles infinitos, los saludos multiples, los saludos multiples 
+  al mismo nodo y no confundir un saludo por una respuesta de un nodo amigo
 )
