@@ -1,3 +1,10 @@
+*** Hristo Ivanov Ivanov
+*** Alberto Lorente Sánchez
+*** Práctica 4. Grupo
+*** 2015/12/08
+*** Auditoría, Calidad y Fiabilidad Informáticas
+*** Máster en Ingeniería Informática
+
 mod TABLA is
   pr CONFIGURATION .
   pr STRING .
@@ -167,11 +174,9 @@ load full-maude.maude
      < O' : Canal | destino : O, listaDestino : respuesta-info(n(O''), n(O)) y lstMsg, estado : ok > .
 
   *** 15
-  ***(
   rl [romper-canal] :
      < O : Canal | estado : ok >
   => < O : Canal | estado : error > . 
-  )
 
   *** 16
   rl [saludar-amigo] :
@@ -271,6 +276,10 @@ endom)
   eq < O : Proceso | datos : (to S : S') C' < O' : Centro | > > C |= existeMensaje(S) = true .
   eq < O : Canal | listaOrigen : lstMsg y (to S : S') > C |= existeMensaje(S) = true .
   eq < O : Canal | listaDestino : lstMsg y (to S : S') > C |= existeMensaje(S) = true .
+  op existeAlgunMensaje : -> Prop [ctor] .
+  eq < O : Proceso | datos : MSG C' < O' : Centro | > > C |= existeAlgunMensaje = true .
+  eq < O : Canal | listaOrigen : lstMsg y MSG > C |= existeAlgunMensaje = true .
+  eq < O : Canal | listaDestino : lstMsg y MSG > C |= existeAlgunMensaje = true .
 
   op numNodos : Configuration -> Nat . 
   eq numNodos(< O : Proceso | datos : < O' : Nodo | > C' > C) = 1 + numNodos(C) .
@@ -324,65 +333,56 @@ endom)
 *** La linea superior da True si alguna vez se cumple que numNodosIgualA(x) -> siempre numNodosIgualA(x) 
 *** 24(b
 (red modelCheck(init21, existeNodo("1111") /\ esAmigoDe(n('p2),n('p1)) -> <> existeMensaje("1111")) .)
-*** Mientras la regla de "romper-canal" este comentada un nodo amigo en algun momento tendra un mensaje en la configuracion
+*** Mientras la regla de "romper-canal" este comentada un nodo amigo en algun momento tendrá un mensaje en la configuracion
 *** 24(c
 (red modelCheck(init21, []( existeMensaje("1111") -> <> ~ existeMensaje("1111"))   ) .)
+(red modelCheck(init21, []( existeAlgunMensaje -> <> ~ existeAlgunMensaje )   ) .)
 *** Si alguna vez existio un mensaje a un nodo quiere decir que en algun momento el mensaje se borrara y desaparecera de mensajes
 
+*** 25
 ***(
-  Dado nuestro codigo un Nodo Extremo no tiene forma de saber quien ha sido
-  el nodo extremo que le ha mandado el mensaje "hola"
+  Dada nuestra especificación un Nodo Extremo no tiene forma de saber quien ha sido
+  el nodo extremo que le ha mandado el mensaje de saludo. Por ejemplo, dada la siguiente
+  topologia:
+           Ext1 |--- canal1 ---|centro|--- canal2 ---| Ext2
+  Si el Ext1 'saluda' al Ext2, este empezará enviando un mensaje:
+    to _:_ : String String -> Msg .
+  Este mensaje será transformado por el Centro en un mensaje:
+    to _:_ : Oid String -> Msg .
+  Finalmente será este segundo mensaje el que llegará al Ext2. Como podemos ver el
+  mensaje no especifica su origen, por lo que Ext2 no puede responder a este.
   
-  Por ejemplo
-  Dada la siguiente topologia:
-  
-  Ext1 |--- canal1 ---|centro|--- canal2 ---| Ext2
-  
-  Si el Ext1 'saluda' al Ext2 en el centro el mensaje se convertira de un to S : S'
-  a un to O : S con lo cual al Ext2 le llega un mensaje con su Oid y "hola". No tiene
-  forma de responder (con nuestro codigo) a su amigo.
-  
-  Seria necesario crear un mensaje de tipo " to S : S' from S'' IDMsg " que
-  fuera enviado desde los extremos hacia el centro, de tal forma que S fuera la 
-  IP destino, S' el mensaje y S'' la IP origen. De esta forma el nodo central
-  tambien tendria que crear un nuevo tipo de mensaje " to O : S from S' " que 
-  fuera enviado del centro al extremo cuando recibiera un mensaje "hola" 
-  (o cualquier otro mensaje para generalizar) del otro extremo amigo. 
-  En este mensaje iria su Oid, el "hola" y la IP del nodo extremo amigo
-  que saluda (o que envia cualquier tipo de mensaje).
+  Es necesario añadir a los mensajes la IP del Nodo en el que se originan. Los nuevos
+  mensajes tendrán el siguiente formato:
+    to _:_from_ : String String String -> Msg .
+    to _:_from_ : Oid String String -> Msg .
+    to _:_ : String String -> Msg .
+    to _:_ : Oid String -> Msg .
+  Los dos últimos mensajes son los mensajes de respuesta. Estos tienen el mismo formato.
+  De esta manera somos capaces de identificar mensajes de 'saludo' y de 'respuesta', esto
+  evitará la entrada en un bucle de saludos.
 
-  Con este nuevo tipo de mensajes se podrian crear unas reglas que:
-  
-  - Dado el centro y un mensaje de tipo to S : S' from S''
-  cree un mensaje mirando en su tabla de ips de tipo to O : S from S' 
-  (donde el S'' del primer mensaje fuera igual al S' del segundo)
-  Y lo envie hacie el nodo extremo correspondiente.
-  
-  - Dado un nodo extremo que reciba este tipo de mensaje (to O : S from S')
-  Introduzca en el canal que va al centro un mensaje de tipo to S : S' from S''
-  (donde el S' del primer mensaje fuera igual al S del segundo e indicase el origen con S'')
-  
-  De esta forma cualquier nodo extremo respondería a cualquier mensaje que le
-  llegara del centro
-  
-  Además de todo lo anterior para que el Extremo sepa a quien debe responder
-  también sería necesario que cada Nodo tengar una tabla 'Tabla de mensaje/saludos enviados'. 
-  En la que insertarán al enviar el primer mensaje y de la que borraran al 
-  recibir el último mensaje descrito.
-  Las entradas de dicha tabla pueden tener este formato: < IP Destino, Mensaje > 
-  
-  Seria necesario cambiar los mensajes de los extremos por to 'IP Destino' : 'Mensaje' from 'IP Origen' 'ID Mensaje' 
-  donde el ID Mensaje: Los extremos tendrán un atributo de tipo Nat.
-  Este campo tomará el valor de ese atributo. Después de enviar un
-  mensaje de saludo(los mensajes de repuesta no cambiaran el valor)
-  ese atributo será incrementado.
-  
-  Ahora el mensaje del centro seria to 'Oid Destino' : 'Mensaje' from 'IP Origen' 'ID Mensaje'  
-  de tal forma que el nodo extremo correspondiente al 'Oid Destino' respondiera con
-  to 'IP Destino' : 'Mensaje' 'ID Mensaje' cuyo 'IDMensaje' seria identico al anterior.
-  Y el centro volveria a crear un mensaje de tipo to 'Oid Destino' : 'Mensaje' 'ID Mensaje'
-  cambiando el Oid.
-  
-  Con todo esto evitariamos; los bucles infinitos, los saludos multiples, los saludos multiples 
-  al mismo nodo y no confundir un saludo por una respuesta de un nodo amigo
-)
+  También es interesante extender lo anteriormente propuesto y añadir un identificador
+  a los mensajes. Los mesajes tendrán el siguiente formato:
+    to _:_from_id_ : String String String Nat -> Msg .
+    to _:_from_id_ : Oid String String Nat -> Msg .
+    to _:_id_ : String String Nat -> Msg .
+    to _:_id_ : Oid String Nat -> Msg .
+  Este identificador de mensajes nos permitirá identificar los mensajes de repuesta, de esta
+  manera podremos saber que Nodos nos han respondido y que Nodos no lo han hecho. Para poder
+  asignar un identificador a cada mensaje debemos extender la definición de nodo para incorporar
+  un atributo extra:
+    class Nodo | IdNextMsg : Nat, tablaDeSaludos : TablaDeSaludos .
+  Este atributo será incrementado y utilizado como 'id' al mandar un mensaje de 'saludo'. Los
+  mensaje de repuesta tendrán el mismo 'id' que el mensaje al que responden.
+  Finalmente los nodos tendrán un atributo que será la 'tablaDeSaludos'. Las entradas en esta
+  tabla tendrán el siguiente formato:
+    < IP Mensaje, Mensaje, IdMsg >
+  Al enviar un mensaje de 'saludo' se insertará una nueva entrada, que será eliminada al recibir
+  la respuesta a dicho mensaje. Esta tabla también nos permitirá remandar un mensaje de 'saludo',
+  si no recibimos respuesta de este. En el mundo real dicha funcionalidad se implementa con un
+  contador que al expirar remanda el mensaje de saludo. En Maude no tenemos noción del tiempo, por
+  lo que no estamos muy seguros de como implementar dicha regla. La unica solución que se nos ocurre
+  es tener una regla con una priorodad muy pequeña que se aplicará unicamente cuando no podemos
+  tomar otra acción.  
+)***
