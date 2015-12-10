@@ -1,0 +1,81 @@
+*** Hristo Ivanov Ivanov
+*** Alberto Lorente Sánchez
+*** Práctica 5. Grupo
+*** 2015/12/08
+*** Auditoría, Calidad y Fiabilidad Informáticas
+*** Máster en Ingeniería Informática
+
+mod SABADO is
+  pr STRING .
+
+  *** Alcohol, Refresco, Hielo  
+  sort Bolsa .
+  op <_,_,_> : Nat Nat Nat -> Bolsa [ctor] .
+
+  sort Status .
+  ops normal, vip, manager : -> Status .
+
+  sort Persona .
+  *** Nombre, Edad, Rol, Copas, Bolsa
+  op |_____| : String Nat Status Nat Bolsa  -> Persona [ctor] .
+  *** Nombre, Edad, Rol, Copas
+  op |____|  : String Nat Status Nat -> Persona [ctor] .
+
+  sort Botellon .
+  subsort Persona < Botellon .
+  op nBotellon : -> Botellon [ctor] .
+  op __ : Botellon Botellon -> Botellon [ctor assoc comm id: nBotellon] .
+  
+  sort ListaLocal .
+  subsort Persona < ListaLocal .
+  op nListaLocal : -> ListaLocal [ctor] .
+  op _|_ : ListaLocal ListaLocal -> ListaLocal [ctor assoc id: nListaLocal] .
+  
+  sort Local .
+  op #_,_,_,_# : Nat Nat Nat Botellon -> Local .
+  
+  sort Noche .
+  op \\\_\\\_///_/// : Botellon ListaLocal Local -> Noche [ctor] .
+  
+  ***************************************************************
+  vars P1 P2 P3 P4 : Persona .
+  vars B1 B2 B3 B4 : Botellon .
+  vars N1 N2 N3 N4 : Nat .
+  vars S1 S2 S3 S4 : String .
+  vars BA BB BC BD : Bolsa .
+  vars SA SB SC SD : Status .
+
+  *********************************************************
+  *** hayHieloBolsa
+  op hHB  : Bolsa -> Bool .
+  ceq hHB(< N1, N2, N3 >) = true 
+      if N3 > 1 .
+  ceq hHB(< N1, N2, N3 >) = false 
+      if N3 < 1 .
+
+  *** hayHielo
+  op hH : Botellon -> Bool .
+  eq hH(| S1 N1 SA N2 BA | B1) = hHB(BA) or hH(B1) .
+  eq hH(| S1 N1 SA N2 | B1) = hH(B1) .
+  eq hH(nBotellon) = false .
+  
+
+
+  *** restarHielo
+  op rH : Bolsa -> Bolsa .
+  eq rH(< N1, N2, N3 >) = < N1, N2, sd(N3,1) > .
+
+ 
+  *** tomarPrestadoHielos
+  op tPH : Botellon -> Botellon .
+  eq tPH(| S1 N1 SA N2 BA | B1) = | S1 N1 SA N2 rH(BA) | B1 .
+  *** 
+
+
+
+  *********************************************************
+  crl [botellon-beber-refresco] :
+     | S1 N1 SA N2 BA | B1 
+  => | S1 N1 SA N2 rH(BA) | B1
+
+endm 
