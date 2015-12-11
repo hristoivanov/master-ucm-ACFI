@@ -90,6 +90,17 @@ mod SABADO is
   eq tPH(| S1 N1 SA N2 BA | B1) = | S1 N1 SA N2 rH(BA) | B1 .
   *** 
 
+  *********************************************************
+  crl[botellon-tomar-refresco-todo-bolsa]
+     | S1 N1 SA N2 BA | B1 
+  => | S1 N1 SA N2 rR(rH(BA)) | B1 
+    if hHB(BA) and hRB(BA).  
+  
+  crl[botellon-tomar-refresco-botellon-bolsa]
+     | S1 N1 SA N2 BA | B1 
+  => | S1 N1 SA N2 rR(BA)) | tPH(B1) 
+    if not hHB(BA) and hH(B1) and hRB(BA).
+  
   *** tomarRefresco (de la Bolsa)
   op tR : Botellon -> Botellon .
   ceq tR(| S1 N1 SA N2 BA | B1) =  | S1 N1 SA N2 rR(rH(BA)) | B1
@@ -107,7 +118,7 @@ mod SABADO is
   *** 
 
   *********************************************************
-  crl [botellon-beber-refresco-bolsa] :
+  crl [botellon-beber-refresco] :
      | S1 N1 SA N2 BA | B1 
      hHB(BA)
   => | S1 N1 SA N2 rH(BA) | B1 .
