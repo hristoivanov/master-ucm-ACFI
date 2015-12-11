@@ -45,6 +45,7 @@ mod SABADO is
   vars BA BB BC BD : Bolsa .
   vars SA SB SC SD : Status .
   vars L1 L2 L3 L4 : ListaLocal .
+  vars LA LB LC LD : Local .
 
   *********************************************************
   *** hayHieloBolsa
@@ -94,13 +95,12 @@ mod SABADO is
     if not hHB(BA) .
 
   op insertaListaLocal : Persona ListaLocal -> ListaLocal .
-  eq insertaListaLocal(| S1 N1 SA N2 BA |, nListaLocal) = | S1 N1 SA N2 BA | .
-  eq insertaListaLocal(| S1 N1 normal N2 BA |, L1) = | S1 N1 SA N2 BA | y L1 .
+  eq insertaListaLocal(| S1 N1 normal N2 BA |, L1) = | S1 N1 normal N2 BA | y L1 .
   eq insertaListaLocal(| S1 N1 vip N2 BA |, L1 y | S2 N3 normal N4 BB | ) =  L1 y | S2 N3 normal N4 BB | y | S1 N1 vip N2 BA | .
   eq insertaListaLocal(| S1 N1 vip N2 BA |, L1 y | S2 N3 vip N4 BB | ) =  insertaListaLocal(| S1 N1 vip N2 BA |, L1) y | S2 N3 vip N4 BB | .
   
   *********************************************************
-  crl [botellon-tomar-refresco-todo-bolsa] : 
+  crl [botellon-tomar-refresco-todo-bolsa] :  
      | S1 N1 SA N2 BA | B1 
   => | S1 N1 SA N2 rR(rH(BA)) | B1 
     if hHB(BA) and hRB(BA) .  
@@ -121,10 +121,13 @@ mod SABADO is
     if not hHB(BA) and hH(B1) and hRB(BA) and hAB(BA) .
   
   rl[ponerse-a-la-cola] :
-    P1 B1
-	L1
-  => B1 
-    insertaListaLocal(P1, L1) .	
+     \\\ P1 B1 \\\ L1 /// LA ///
+  => \\\ B1 \\\ insertaListaLocal(P1, L1) /// LA /// .
+
+  crl[cola-botellon] :
+     \\\ B1 \\\ L1 y P1 /// LA ///
+  => \\\ P1 B1 \\\ L1 /// LA /// 
+    if esMenor(P1) or hBD(P1) . *** haBebidoDemasiado TODO .
 
   op initB : Nat Nat Nat -> Bolsa .
   eq initB(N1, N2, N3) = < N1, N2, N3 > .
@@ -133,8 +136,12 @@ mod SABADO is
   
   op init : -> Botellon .
   eq init = initP("Jose", 23, normal, 0, initB(1, 1, 0)) 
-            initP("Mariano", 23, normal, 0, initB(0, 0, 5)) . 
+            initP("Mariano", 23, vip, 0, initB(0, 0, 5)) . 
+ 
+  op initn : -> Noche .
+  eq initn = \\\ init \\\ nListaLocal /// # 0, 0, 0, nBotellon # /// .
 
 endm 
 
 frew init .
+frew initn .
