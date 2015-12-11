@@ -29,7 +29,7 @@ mod SABADO is
   sort ListaLocal .
   subsort Persona < ListaLocal .
   op nListaLocal : -> ListaLocal [ctor] .
-  op _|_ : ListaLocal ListaLocal -> ListaLocal [ctor assoc id: nListaLocal] .
+  op _y_ : ListaLocal ListaLocal -> ListaLocal [ctor assoc id: nListaLocal] .
   
   sort Local .
   op #_,_,_,_# : Nat Nat Nat Botellon -> Local .
@@ -44,6 +44,7 @@ mod SABADO is
   vars S1 S2 S3 S4 : String .
   vars BA BB BC BD : Bolsa .
   vars SA SB SC SD : Status .
+  vars L1 L2 L3 L4 : ListaLocal .
 
   *********************************************************
   *** hayHieloBolsa
@@ -92,12 +93,17 @@ mod SABADO is
   ceq tPH(| S1 N1 SA N2 BA | B1) = tPH(B1) 
     if not hHB(BA) .
 
+  op insertaListaLocal : Persona ListaLocal -> ListaLocal .
+  eq insertaListaLocal(| S1 N1 SA N2 BA |, nListaLocal) = | S1 N1 SA N2 BA | .
+  eq insertaListaLocal(| S1 N1 normal N2 BA |, L1) = | S1 N1 SA N2 BA | y L1 .
+  eq insertaListaLocal(| S1 N1 vip N2 BA |, L1 y | S2 N3 normal N4 BB | ) =  L1 y | S2 N3 normal N4 BB | y | S1 N1 vip N2 BA | .
+  eq insertaListaLocal(| S1 N1 vip N2 BA |, L1 y | S2 N3 vip N4 BB | ) =  insertaListaLocal(| S1 N1 vip N2 BA |, L1) y | S2 N3 vip N4 BB | .
+  
   *********************************************************
   crl [botellon-tomar-refresco-todo-bolsa] : 
      | S1 N1 SA N2 BA | B1 
   => | S1 N1 SA N2 rR(rH(BA)) | B1 
     if hHB(BA) and hRB(BA) .  
-
 
   crl[botellon-tomar-refresco-botellon-bolsa] : 
      | S1 N1 SA N2 BA | B1 
@@ -114,6 +120,11 @@ mod SABADO is
   => | S1 N1 SA (s(N2)) rA(rR(BA)) | tPH(B1) 
     if not hHB(BA) and hH(B1) and hRB(BA) and hAB(BA) .
   
+  rl[ponerse-a-la-cola] :
+    P1 B1
+	L1
+  => B1 
+    insertaListaLocal(P1, L1) .	
 
   op initB : Nat Nat Nat -> Bolsa .
   eq initB(N1, N2, N3) = < N1, N2, N3 > .
