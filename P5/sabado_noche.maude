@@ -47,25 +47,25 @@ mod SABADO is
 
   *********************************************************
   *** hayHieloBolsa
-  op hHB  : Bolsa -> Bool .
+  op hHB : Bolsa -> Bool .
   ceq hHB(< N1, N2, N3 >) = true 
-      if N3 > 1 .
+      if N3 > 0 .
   ceq hHB(< N1, N2, N3 >) = false 
-      if N3 < 1 .
+      if N3 <= 0 .
 	  
   *** hayRefrescoBolsa
   op hRB  : Bolsa -> Bool .
   ceq hRB(< N1, N2, N3 >) = true 
-      if N2 > 1 .
+      if N2 > 0 .
   ceq hRB(< N1, N2, N3 >) = false 
-      if N2 < 1 .
+      if N2 <= 0 .
 	  
   *** hayAlcoholBolsa
   op hAB  : Bolsa -> Bool .
   ceq hAB(< N1, N2, N3 >) = true 
-      if N1 > 1 .
+      if N1 > 0 .
   ceq hAB(< N1, N2, N3 >) = false 
-      if N1 < 1 .
+      if N1 <= 0 .
 	  
   *** hayHielo  (En la bolsa o en el botellon)
   op hH : Botellon -> Bool .
@@ -75,58 +75,55 @@ mod SABADO is
   
   *** restarHielo (de la Bolsa)
   op rH : Bolsa -> Bolsa .
-  eq rH(< N1, N2, N3 >) = < N1, N2, sd(N3,1) > .
+  eq rH(< N1, N2, N3 >) = < N1, N2, sd(N3, 1) > .
   
   *** restarRefresco (de la Bolsa)
   op rR : Bolsa -> Bolsa .
-  eq rR(< N1, N2, N3 >) = < N1, sd(N2,1), N3 > .
+  eq rR(< N1, N2, N3 >) = < N1, sd(N2, 1), N3 > .
   
   *** restarAlcohol (de la Bolsa)
   op rA : Bolsa -> Bolsa .
-  eq rA(< N1, N2, N3 >) = < sd(N1,1, N2, N3) > .
+  eq rA(< N1, N2, N3 >) = < sd(N1, 1), N2, N3 > .
   
   *** tomarPrestadoHielos (del Botellon)
   op tPH : Botellon -> Botellon .
-  eq tPH(| S1 N1 SA N2 BA | B1) = | S1 N1 SA N2 rH(BA) | B1 .
-  *** 
+  ceq tPH(| S1 N1 SA N2 BA | B1) = | S1 N1 SA N2 rH(BA) | B1 
+    if hHB(BA) .
+  ceq tPH(| S1 N1 SA N2 BA | B1) = tPH(B1) 
+    if not hHB(BA) .
 
   *********************************************************
-  crl[botellon-tomar-refresco-todo-bolsa]
+  crl [botellon-tomar-refresco-todo-bolsa] : 
      | S1 N1 SA N2 BA | B1 
   => | S1 N1 SA N2 rR(rH(BA)) | B1 
-    if hHB(BA) and hRB(BA).  
-  
-  crl[botellon-tomar-refresco-botellon-bolsa]
-     | S1 N1 SA N2 BA | B1 
-  => | S1 N1 SA N2 rR(BA)) | tPH(B1) 
-    if not hHB(BA) and hH(B1) and hRB(BA).
-  
-  *** tomarRefresco (de la Bolsa)
-  op tR : Botellon -> Botellon .
-  ceq tR(| S1 N1 SA N2 BA | B1) =  | S1 N1 SA N2 rR(rH(BA)) | B1
-    if hRB(BA) and hHB(BA)  .
-  ceq tR(| S1 N1 SA N2 BA | B1) =  | S1 N1 SA N2 rR(BA) | tpH(B1)
-    if hRB(BA) and not hHB(BA) and hH(B1) .
-  *** 
-  
-  *** tomarAlcohol (de la Bolsa)
-  op tA : Botellon -> Botellon .
-  ceq tA(| S1 N1 SA N2 BA | B1) =  | S1 N1 SA N2 rA(rR(rH(BA))) | B1
-    if hAB(BA) and hHB(BA) and hRB(BA)  .
-  ceq tA(| S1 N1 SA N2 BA | B1) =  | S1 N1 SA N2 rA(rR(BA)) | tpH(B1)
-    if hAB(BA) and hRB(BA) not hHB(BA) and hH(B1) .
-  *** 
+    if hHB(BA) and hRB(BA) .  
 
-  *********************************************************
-  crl [botellon-beber-refresco] :
-     | S1 N1 SA N2 BA | B1 
-     hHB(BA)
-  => | S1 N1 SA N2 rH(BA) | B1 .
 
-  crl [botellon-beber-refresco-botellon] :
+  crl[botellon-tomar-refresco-botellon-bolsa] : 
      | S1 N1 SA N2 BA | B1 
-     not hHB(BA)
-     hH(B1)
-  => | S1 N1 SA N2 BA | tPH(B1) .
+  => | S1 N1 SA N2 rR(BA) | tPH(B1) 
+    if not hHB(BA) and hH(B1) and hRB(BA) .
+
+  crl[botellon-tomar-alcohol-todo-bolsa] : 
+     | S1 N1 SA N2 BA | B1 
+  => | S1 N1 SA (s(N2)) rA(rR(rH(BA))) | B1 
+    if hHB(BA) and hRB(BA) and hAB(BA) .  
+
+  crl[botellon-tomar-alcohol-botellon-bolsa] : 
+     | S1 N1 SA N2 BA | B1 
+  => | S1 N1 SA (s(N2)) rA(rR(BA)) | tPH(B1) 
+    if not hHB(BA) and hH(B1) and hRB(BA) and hAB(BA) .
   
+
+  op initB : Nat Nat Nat -> Bolsa .
+  eq initB(N1, N2, N3) = < N1, N2, N3 > .
+  op initP : String Nat Status Nat Bolsa -> Persona .
+  eq initP(S1, N1, SA, N2, BA) = | S1 N1 SA N2 BA | .
+  
+  op init : -> Botellon .
+  eq init = initP("Jose", 23, normal, 0, initB(1, 1, 0)) 
+            initP("Mariano", 23, normal, 0, initB(0, 0, 5)) . 
+
 endm 
+
+frew init .
