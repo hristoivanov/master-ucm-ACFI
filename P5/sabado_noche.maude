@@ -52,30 +52,70 @@ mod SABADO is
       if N3 > 1 .
   ceq hHB(< N1, N2, N3 >) = false 
       if N3 < 1 .
-
-  *** hayHielo
+	  
+  *** hayRefrescoBolsa
+  op hRB  : Bolsa -> Bool .
+  ceq hRB(< N1, N2, N3 >) = true 
+      if N2 > 1 .
+  ceq hRB(< N1, N2, N3 >) = false 
+      if N2 < 1 .
+	  
+  *** hayAlcoholBolsa
+  op hAB  : Bolsa -> Bool .
+  ceq hAB(< N1, N2, N3 >) = true 
+      if N1 > 1 .
+  ceq hAB(< N1, N2, N3 >) = false 
+      if N1 < 1 .
+	  
+  *** hayHielo  (En la bolsa o en el botellon)
   op hH : Botellon -> Bool .
   eq hH(| S1 N1 SA N2 BA | B1) = hHB(BA) or hH(B1) .
   eq hH(| S1 N1 SA N2 | B1) = hH(B1) .
   eq hH(nBotellon) = false .
   
-
-
-  *** restarHielo
+  *** restarHielo (de la Bolsa)
   op rH : Bolsa -> Bolsa .
   eq rH(< N1, N2, N3 >) = < N1, N2, sd(N3,1) > .
-
- 
-  *** tomarPrestadoHielos
+  
+  *** restarRefresco (de la Bolsa)
+  op rR : Bolsa -> Bolsa .
+  eq rR(< N1, N2, N3 >) = < N1, sd(N2,1), N3 > .
+  
+  *** restarAlcohol (de la Bolsa)
+  op rA : Bolsa -> Bolsa .
+  eq rA(< N1, N2, N3 >) = < sd(N1,1, N2, N3) > .
+  
+  *** tomarPrestadoHielos (del Botellon)
   op tPH : Botellon -> Botellon .
   eq tPH(| S1 N1 SA N2 BA | B1) = | S1 N1 SA N2 rH(BA) | B1 .
   *** 
 
-
+  *** tomarRefresco (de la Bolsa)
+  op tR : Botellon -> Botellon .
+  ceq tR(| S1 N1 SA N2 BA | B1) =  | S1 N1 SA N2 rR(rH(BA)) | B1
+    if hRB(BA) and hHB(BA)  .
+  ceq tR(| S1 N1 SA N2 BA | B1) =  | S1 N1 SA N2 rR(BA) | tpH(B1)
+    if hRB(BA) and not hHB(BA) and hH(B1) .
+  *** 
+  
+  *** tomarAlcohol (de la Bolsa)
+  op tA : Botellon -> Botellon .
+  ceq tA(| S1 N1 SA N2 BA | B1) =  | S1 N1 SA N2 rA(rR(rH(BA))) | B1
+    if hAB(BA) and hHB(BA) and hRB(BA)  .
+  ceq tA(| S1 N1 SA N2 BA | B1) =  | S1 N1 SA N2 rA(rR(BA)) | tpH(B1)
+    if hAB(BA) and hRB(BA) not hHB(BA) and hH(B1) .
+  *** 
 
   *********************************************************
-  crl [botellon-beber-refresco] :
+  crl [botellon-beber-refresco-bolsa] :
      | S1 N1 SA N2 BA | B1 
-  => | S1 N1 SA N2 rH(BA) | B1
+     hHB(BA)
+  => | S1 N1 SA N2 rH(BA) | B1 .
 
+  crl [botellon-beber-refresco-botellon] :
+     | S1 N1 SA N2 BA | B1 
+     not hHB(BA)
+     hH(B1)
+  => | S1 N1 SA N2 BA | tPH(B1) .
+  
 endm 
