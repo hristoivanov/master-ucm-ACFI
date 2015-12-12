@@ -32,6 +32,7 @@ mod SABADO is
   op _y_ : ListaLocal ListaLocal -> ListaLocal [ctor assoc id: nListaLocal] .
   
   sort Local .
+  *** Aforo, Alcohol, Refrescos, Gente
   op #_,_,_,_# : Nat Nat Nat Botellon -> Local .
   
   sort Noche .
@@ -40,7 +41,7 @@ mod SABADO is
   ***************************************************************
   vars P1 P2 P3 P4 : Persona .
   vars B1 B2 B3 B4 : Botellon .
-  vars N1 N2 N3 N4 : Nat .
+  vars N1 N2 N3 N4 N5 : Nat .
   vars S1 S2 S3 S4 : String .
   vars BA BB BC BD : Bolsa .
   vars SA SB SC SD : Status .
@@ -99,6 +100,35 @@ mod SABADO is
   eq insertaListaLocal(| S1 N1 vip N2 BA |, L1 y | S2 N3 normal N4 BB | ) =  L1 y | S2 N3 normal N4 BB | y | S1 N1 vip N2 BA | .
   eq insertaListaLocal(| S1 N1 vip N2 BA |, L1 y | S2 N3 vip N4 BB | ) =  insertaListaLocal(| S1 N1 vip N2 BA |, L1) y | S2 N3 vip N4 BB | .
   
+  ***********************************///INICIO - COMPROBAR\\\***********************************
+  *** COMPROBAR CON MAUDE
+  *** True - If P1 es menor
+  op esMenor : Persona -> Bool .
+  ceq esMenor(| S1 N1 SA N2 BA |) = true
+    if N1 < 18 . 
+  eq esMenor(P1) = false [owise] .	
+  
+  *** haBebidoDemasiado. True - If P1 ha bebido 3 o más copas
+  op hBD : Persona -> Bool .
+  ceq hBD(| S1 N1 SA N2 BA |) = true
+    if N2 >= 3 . 
+  eq hBD(P1) = false [owise] .
+  
+  *** Cantidad de gente Local
+  op localNoLLeno : Local -> Bool .
+  ceq localNoLLeno(# N1, N2, N3, B1 #) = true
+    if cantidadGente(B1) < N1 .
+  eq localNoLLeno(# N1, N2, N3, B1 #) = false [owise] .
+  
+  op cantidadGente : Botellon -> Nat .
+  eq cantidadGente(P1 B1) = 1 + cantidadGente(B1) .
+  eq cantidadGente(nBotellon) = 0 [owise] .
+  
+  *** Pasa a una persona de la cola al Local
+  op entraLocal : Persona Local -> Local .
+  eq entraLocal(| S1 N1 SA N2 BA |, # N3, N4, N5, B1 #) = # N3, N4, N5, (| S1 N1 SA N2 |  B1) # .
+  ***********************************///FIN - COMPROBAR\\\***********************************
+  
   *********************************************************
   crl [botellon-tomar-refresco-todo-bolsa] :  
      | S1 N1 SA N2 BA | B1 
@@ -127,8 +157,19 @@ mod SABADO is
   crl[cola-botellon] :
      \\\ B1 \\\ L1 y P1 /// LA ///
   => \\\ P1 B1 \\\ L1 /// LA /// 
-    if esMenor(P1) or hBD(P1) . *** haBebidoDemasiado TODO .
+    if esMenor(P1) or hBD(P1) . *** haBebidoDemasiado 
 
+	
+  ***********************************///INICIO - COMPROBAR\\\***********************************
+  
+  crl[cola-local] :
+     \\\ B1 \\\ L1 y P1 /// LA ///
+  => \\\ B1 \\\ L1 /// entraLocal(P1, LA) /// 
+    if not esMenor(P1) and  not hBD(P1) and localNoLLeno(LA) . 
+	
+ ***********************************///FIN - COMPROBAR\\\***********************************
+  
+  
   op initB : Nat Nat Nat -> Bolsa .
   eq initB(N1, N2, N3) = < N1, N2, N3 > .
   op initP : String Nat Status Nat Bolsa -> Persona .
