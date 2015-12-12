@@ -48,7 +48,7 @@ mod SABADO is
   vars L1 L2 L3 L4 : ListaLocal .
   vars LA LB LC LD : Local .
 
-  *********************************************************
+  ***************************************************************
   *** hayHieloBolsa
   op hHB : Bolsa -> Bool .
   ceq hHB(< N1, N2, N3 >) = true 
@@ -132,7 +132,7 @@ mod SABADO is
   
   ***********************************///FIN - COMPROBAR\\\***********************************
   
-  *********************************************************
+  ***************************************************************
   crl [botellon-tomar-refresco-todo-bolsa] :  
      | S1 N1 SA N2 BA | B1 
   => | S1 N1 SA N2 rR(rH(BA)) | B1 
@@ -212,3 +212,148 @@ endm
 
 frew init .
 frew initn .
+
+(omod PROPS is
+  pr SATISFACTION .
+  pr SABADO .
+  subsort Sabado < State .
+  
+  ***************************************************************
+  vars P1 P2 P3 P4 : Persona .
+  vars B1 B2 B3 B4 : Botellon .
+  vars N1 N2 N3 N4 N5 N6 N7 : Nat .
+  vars S1 S2 S3 S4 : String .
+  vars BA BB BC BD : Bolsa .
+  vars SA SB SC SD : Status .
+  vars L1 L2 L3 L4 : ListaLocal .
+  vars LA LB LC LD : Local .
+  ***************************************************************	
+  
+  *** Si se ha acabado el alcohol en el local.
+  op quedaAlcoholLocal : -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// LA /// |= quedaAlcoholLocal = getAlcoholLocal(LA) > 0 .
+  
+  op getAlcoholLocal : Local -> Nat .
+  eq getAlcoholLocal(# N1, N2, N3, B1 #) = N2 .
+  
+  ***Si se han acabado los refrescos en el local.
+  op quedaRefrescosLocal : -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// LA /// |= quedaRefrescosLocal = getRefrescoslLocal(LA) > 0 .
+  
+  op getRefrescoslLocal : Local -> Nat .
+  eq getRefrescoslLocal(# N1, N2, N3, B1 #) = N3 .
+  
+  ***Si alguien (identificado por su nombre) está en la cola.
+  op estaEnLaCola : String -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// LA /// |= estaEnLaCola(S1) = estaEnLacola(LA,S1) .
+  
+  op estaEnLacola : ListaLocal String -> Bool .
+  ceq estaEnLacola(L1 y | S1 N1 SA N2 BA |, S2) = true
+    if S2 == S1 .
+  ceq estaEnLacola(L1 y | S1 N1 SA N2 BA |, S2) = estaEnLacola(L1,S2)
+    if S2 =/= S1 .
+  eq estaEnLacola(nListaLocal, S2) = false [owise] .
+  
+  ***Si alguien (identificado por su nombre) está en el local.
+  op estaEnElLocal : String -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// # N1, N2, N3, B2 # /// |= estaEnElLocal(S1) = estaEnElLocal(B2,S1) .
+  
+  op estaEnElLocal : Botellon String -> Bool .
+  ceq estaEnElLocal(| S1 N4 SA N5 | B1 , S2) = true
+    if S2 == S1 .
+  ceq estaEnElLocal(| S1 N4 SA N5 | B1 , S2) = estaEnElLocal(B1,S2)
+    if S2 =/= S1 .
+  eq estaEnElLocal(nBotellon, S2) = false [owise] .
+  
+  ***Si el número de personas en el interior del local es menor de un cierto número dado como argumento.
+  op numPersonasLocalMenorQue : Nat -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// # N1, N2, N3, B2 # /// |= numPersonasLocalMenorQue(N4) = cantidadGente(B2) < N4 .
+  
+  op cantidadGente : Botellon -> Nat .
+  eq cantidadGente(P1 B1) = 1 + cantidadGente(B1) .
+  eq cantidadGente(nBotellon) = 0 [owise] .
+  
+  ***Si una persona ha bebido demasiado (3 o más copas fuera del local o 4 o más dentro).
+  op hayBorrachos : -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// # N1, N2, N3, B2 # /// |= hayBorrachos = hayBorrachosLocal(B2) or hayBorrachosBotellon(B1) .
+  
+  ops hayBorrachosBotellon hayBorrachosLocal : Botellon -> Bool .
+  ceq hayBorrachosBotellon(| S1 N1 SA N2 BA | B1) = true
+    if N2 >= 3 .
+  ceq hayBorrachosBotellon(| S1 N1 SA N2 BA | B1) = hayBorrachosBotellon(B1)
+    if N2 < 3 .	
+  eq hayBorrachosBotellon(nBotellon) = false [owise] .
+  
+  ceq hayBorrachosLocal(| S1 N1 SA N2 | B1) = true
+    if N2 >= 4 .
+  ceq hayBorrachosLocal(| S1 N1 SA N2 | B1) = hayBorrachosLocal(B1)
+    if N2 < 4 .	
+  eq hayBorrachosLocal(nBotellon) = false [owise] . 
+  
+  ***Si queda hielo en la zona de botellón
+  op quedaHielo : -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// LA /// |= quedaHielo = hH(B1) .
+  
+  op hH : Botellon -> Bool .
+  eq hH(| S1 N1 SA N2 BA | B1) = hHB(BA) or hH(B1) .
+  eq hH(| S1 N1 SA N2 | B1) = hH(B1) .
+  eq hH(nBotellon) = false .
+  
+  op hHB : Bolsa -> Bool .
+  ceq hHB(< N1, N2, N3 >) = true 
+      if N3 > 0 .
+  ceq hHB(< N1, N2, N3 >) = false 
+      if N3 <= 0 .
+
+  ***Si quedan refrescos en la zona de botellón.
+  op quedaRefresco : -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// LA /// |= quedaRefresco = hR(B1) .
+  
+  op hR : Botellon -> Bool .
+  eq hR(| S1 N1 SA N2 BA | B1) = hRB(BA) or hR(B1) .
+  eq hR(| S1 N1 SA N2 | B1) = hR(B1) .
+  eq hR(nBotellon) = false .
+  
+  op hRB  : Bolsa -> Bool .
+  ceq hRB(< N1, N2, N3 >) = true 
+      if N2 > 0 .
+  ceq hRB(< N1, N2, N3 >) = false 
+      if N2 <= 0 .
+
+  ***Si queda alcohol en la zona de botellón.
+  op quedaAlcohol : -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// LA /// |= quedaAlcohol = hA(B1) .
+
+  op hA : Botellon -> Bool .
+  eq hA(| S1 N1 SA N2 BA | B1) = hAB(BA) or hA(B1) .
+  eq hA(| S1 N1 SA N2 | B1) = hA(B1) .
+  eq hA(nBotellon) = false .
+
+  op hAB  : Bolsa -> Bool .
+  ceq hAB(< N1, N2, N3 >) = true 
+      if N1 > 0 .
+  ceq hAB(< N1, N2, N3 >) = false 
+      if N1 <= 0 .  
+endom)
+
+(omod CHECK is
+  pr PROPS .
+  pr MODEL-CHECKER .
+  pr LTL-SIMPLIFIER .
+endom)
+
+***Ejercicio 4
+***"Dabi" siempre está en el local.
+(red modelCheck(initn, [] estaEnElLocal("Dabi")) .)
+***Si el aforo no se supera al principio, entonces no se supera nunca.
+(red modelCheck(initn, numPersonasLocalMenorQue(5) -> [] numPersonasLocalMenorQue(5)) .)
+***Si alguien está en la cola acaba entrando.
+(red modelCheck(initn, estaEnLacola("Alberto") -> <> estaEnElLocal("Alberto")) .)
+***El alcohol nunca se acaba.
+(red modelCheck(initn, [] quedaAlcoholLocal()) .)
+***Los refrescos siempre se acaban.
+(red modelCheck(initn, [] not quedaRefrescosLocal) .)
+***En algún momento alguien bebe de más, y permanece en ese estado para siempre.
+***WHAT?(red modelCheck(initn, XXX) .)
+***Si hay hielo, refrescos y alcohol en la zona de botellón, entonces en algun momento alguien bebe de más.
+***WHAT2.0?(red modelCheck(initn, [] estaEnElLocal("Dabi")) .)
