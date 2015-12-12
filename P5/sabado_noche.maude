@@ -41,7 +41,7 @@ mod SABADO is
   ***************************************************************
   vars P1 P2 P3 P4 : Persona .
   vars B1 B2 B3 B4 : Botellon .
-  vars N1 N2 N3 N4 N5 : Nat .
+  vars N1 N2 N3 N4 N5 N6 N7 : Nat .
   vars S1 S2 S3 S4 : String .
   vars BA BB BC BD : Bolsa .
   vars SA SB SC SD : Status .
@@ -127,6 +127,9 @@ mod SABADO is
   *** Pasa a una persona de la cola al Local
   op entraLocal : Persona Local -> Local .
   eq entraLocal(| S1 N1 SA N2 BA |, # N3, N4, N5, B1 #) = # N3, N4, N5, (| S1 N1 SA N2 |  B1) # .
+ 
+  
+  
   ***********************************///FIN - COMPROBAR\\\***********************************
   
   *********************************************************
@@ -167,6 +170,24 @@ mod SABADO is
   => \\\ B1 \\\ L1 /// entraLocal(P1, LA) /// 
     if not esMenor(P1) and  not hBD(P1) and localNoLLeno(LA) . 
 	
+  crl[local-tomar-refresco] :
+     # N1, N2, N3, | S1 N4 SA N5 | B1 #
+  => # N1, N2, sd(N3,1), | S1 N4 SA N5 | B1 #
+    if N3 > 0 .
+	
+  crl[local-tomar-copa] :
+     # N1, N2, N3, | S1 N4 SA N5 | B1 #
+  => # N1, sd(N2,1), sd(N3,1), | S1 N4 SA (N5+1) | B1 #
+    if N2 > 0  and N3 > 0 and N5 < 4 .	
+	
+  crl[echar-del-local] :
+     # N1, N2, N3, | "dabi" N6 manager N7 | | S1 N4 SA N5 | B1 #
+  => # N1, N2, N3, | "dabi" N6 manager N7 | B1 #
+    if N5 >= 4 .
+
+  rl[volver-a-casa] :
+     # N1, N2, N3, | S1 N4 (normal or vip) N5 | B1 #   ***esto se puede hacer?
+  => # N1, N2, N3, B1 #	.
  ***********************************///FIN - COMPROBAR\\\***********************************
   
   
@@ -175,12 +196,17 @@ mod SABADO is
   op initP : String Nat Status Nat Bolsa -> Persona .
   eq initP(S1, N1, SA, N2, BA) = | S1 N1 SA N2 BA | .
   
-  op init : -> Botellon .
-  eq init = initP("Jose", 23, normal, 0, initB(1, 1, 0)) 
-            initP("Mariano", 23, vip, 0, initB(0, 0, 5)) . 
- 
+  ops init initLocal: -> Botellon .
+  eq init = initP("Jose"      , 30, normal  , 0, initB(2, 1, 1)) 
+            initP("Mariano"   , 30, normal  , 0, initB(0, 0, 1))
+            initP("Hristo"    , 30, normal  , 0, initB(0, 0, 0))	
+            initP("Alberto"   , 17, normal  , 0, initB(1, 2, 1))
+            initP("Gildo"     , 30, vip     , 0, initB(1, 0, 1))
+            initP("Luisma"    , 30, vip     , 0, initB(1, 2, 0)) . 
+  eq initLocal = initP("Dabi", 23, manager  , 0)) .
+  
   op initn : -> Noche .
-  eq initn = \\\ init \\\ nListaLocal /// # 0, 0, 0, nBotellon # /// .
+  eq initn = \\\ init \\\ nListaLocal /// # 5, 6, 5, initLocal # /// .
 
 endm 
 
