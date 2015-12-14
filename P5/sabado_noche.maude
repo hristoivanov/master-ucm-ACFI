@@ -220,16 +220,16 @@ mod SABADO is
   op initn : -> Noche .
   ***eq initn = \\\ nBotellon \\\ listaEntrada /// # 5, 6, 5, initLocal # /// .
   eq initn = \\\ init \\\ nListaLocal /// # 5, 6, 5, initLocal # /// .
-endm 
+endm
 
 ***frew init .
-frew [1000] initn .
+frew [1000] initn . 
 
 (omod PROPS is
   pr SATISFACTION .
   pr SABADO .
   subsort Sabado < State .
-  
+
   ***************************************************************
   vars P1 P2 P3 P4 : Persona .
   vars B1 B2 B3 B4 : Botellon .
@@ -345,7 +345,8 @@ frew [1000] initn .
   ceq hAB(< N1, N2, N3 >) = true 
       if N1 > 0 .
   ceq hAB(< N1, N2, N3 >) = false 
-      if N1 <= 0 .  
+      if N1 <= 0 . 
+
 endom)
 
 (omod CHECK is
