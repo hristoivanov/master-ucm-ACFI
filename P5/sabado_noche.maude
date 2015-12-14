@@ -156,9 +156,10 @@ mod SABADO is
   => | S1 N1 SA (s(N2)) rA(rR(BA)) | tPH(B1) 
     if not hHB(BA) and hH(B1) and hRB(BA) and hAB(BA) .
   
-  rl[ponerse-a-la-cola] :
-     \\\ P1 B1 \\\ L1 /// LA ///
-  => \\\ B1 \\\ insertaListaLocal(P1, L1) /// LA /// .
+  crl[ponerse-a-la-cola] :
+     \\\ | S1 N1 SA N2 BA | B1 \\\ L1 /// LA ///
+  => \\\ B1 \\\ insertaListaLocal(| S1 N1 SA N2 BA |, L1) /// LA /// 
+    if SA =/= manager .
 
   crl[cola-botellon] :
      \\\ B1 \\\ L1 y P1 /// LA ///
@@ -204,10 +205,10 @@ mod SABADO is
   eq initM(S1, N1, SA, N2) = | S1 N1 SA N2 | . 
   
   op init : -> Botellon .
-  eq init = initP("Jose"      , 30, normal  , 0, initB(2, 1, 1)) 
+  eq init = initP("Jose"      , 30, normal  , 6, initB(2, 1, 1)) 
             initP("Mariano"   , 30, normal  , 0, initB(0, 0, 1))
             initP("Hristo"    , 30, normal  , 0, initB(0, 0, 0))	
-            initP("Zafiro"   , 17, normal  , 0, initB(1, 2, 1))
+            ***initP("Zafiro"    , 17, normal  , 0, initB(1, 2, 1))
             initP("Gildo"     , 30, vip     , 0, initB(1, 0, 1))
             initP("Luisma"    , 30, vip     , 0, initB(1, 2, 0)) . 
   
@@ -223,12 +224,15 @@ mod SABADO is
 endm
 
 ***frew init .
-frew [1000] initn . 
+frew																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																											 initn . 
 
-(omod PROPS is
+load model-checker.maude
+load full-maude.maude
+
+mod PROPS is
   pr SATISFACTION .
   pr SABADO .
-  subsort Sabado < State .
+  subsort Noche < State .
 
   ***************************************************************
   vars P1 P2 P3 P4 : Persona .
@@ -240,7 +244,7 @@ frew [1000] initn .
   vars L1 L2 L3 L4 : ListaLocal .
   vars LA LB LC LD : Local .
   ***************************************************************	
-  
+ 
   *** Si se ha acabado el alcohol en el local.
   op quedaAlcoholLocal : -> Prop [ctor] .
   eq \\\ B1 \\\ L1 /// LA /// |= quedaAlcoholLocal = getAlcoholLocal(LA) > 0 .
@@ -256,27 +260,26 @@ frew [1000] initn .
   eq getRefrescoslLocal(# N1, N2, N3, B1 #) = N3 .
   
   ***Si alguien (identificado por su nombre) está en la cola.
-  op estaEnLaCola : String -> Prop [ctor] .
-  eq \\\ B1 \\\ L1 /// LA /// |= estaEnLaCola(S1) = estaEnLacola(LA,S1) .
+  op estaEnLacola : String -> Prop [ctor] .
+  eq \\\ B1 \\\ L1 /// LA /// |= estaEnLacola(S1) = estaEnLaColaAUX( L1 , S1 ) .
   
-  op estaEnLacola : ListaLocal String -> Bool .
-  ceq estaEnLacola(L1 y | S1 N1 SA N2 BA |, S2) = true
-    if S2 == S1 .
-  ceq estaEnLacola(L1 y | S1 N1 SA N2 BA |, S2) = estaEnLacola(L1,S2)
-    if S2 =/= S1 .
-  eq estaEnLacola(nListaLocal, S2) = false [owise] .
-  
+  op estaEnLaColaAUX : ListaLocal String -> Bool .
+  ceq estaEnLaColaAUX((L1 y | S1 N1 SA N2 BA |) , S2) = true
+   if S2 == S1 .
+  ceq estaEnLaColaAUX((L1 y | S1 N1 SA N2 BA |) , S2) = estaEnLaColaAUX(L1,S2)
+   if S2 =/= S1 .
+  ceq estaEnLaColaAUX((L1 y | S1 N1 SA N2 BA |) , S2) = false  
+   if L1 == nListaLocal . 
+
   ***Si alguien (identificado por su nombre) está en el local.
   op estaEnElLocal : String -> Prop [ctor] .
-  eq \\\ B1 \\\ L1 /// # N1, N2, N3, B2 # /// |= estaEnElLocal(S1) = estaEnElLocal(B2,S1) .
+  eq \\\ B1 \\\ L1 /// # N1, N2, N3, B2 # /// |= estaEnElLocal(S1) = estaEnElLocalAUX(B2, S1) .
   
-  op estaEnElLocal : Botellon String -> Bool .
-  ceq estaEnElLocal(| S1 N4 SA N5 | B1 , S2) = true
-    if S2 == S1 .
-  ceq estaEnElLocal(| S1 N4 SA N5 | B1 , S2) = estaEnElLocal(B1,S2)
-    if S2 =/= S1 .
-  eq estaEnElLocal(nBotellon, S2) = false [owise] .
+  op estaEnElLocalAUX : Botellon String -> Bool .
+  eq estaEnElLocalAUX((| S1 N4 SA N5 | B1) , S1) = true .
+  eq estaEnElLocalAUX(B1 , S2) = false [owise] .
   
+  ***
   ***Si el número de personas en el interior del local es menor de un cierto número dado como argumento.
   op numPersonasLocalMenorQue : Nat -> Prop [ctor] .
   eq \\\ B1 \\\ L1 /// # N1, N2, N3, B2 # /// |= numPersonasLocalMenorQue(N4) = cantidadGente(B2) < N4 .
@@ -347,25 +350,27 @@ frew [1000] initn .
   ceq hAB(< N1, N2, N3 >) = false 
       if N1 <= 0 . 
 
-endom)
+endm
 
-(omod CHECK is
+mod CHECK is
   pr PROPS .
   pr MODEL-CHECKER .
   pr LTL-SIMPLIFIER .
-endom)
+endm
 
 ***Ejercicio 4
 ***"Dabi" siempre está en el local.
-(red modelCheck(initn, [] estaEnElLocal("Dabi")) .)
+***red modelCheck(initn, [] estaEnElLocal("Dabi")) .                                          ***COMPROBADO
+*** True => Dabi siempre esta en el Local, no bebe y no se va a ningun lado
 ***Si el aforo no se supera al principio, entonces no se supera nunca.
-(red modelCheck(initn, numPersonasLocalMenorQue(5) -> [] numPersonasLocalMenorQue(5)) .)
+***red modelCheck(initn, <> numPersonasLocalMenorQue(6) -> [] numPersonasLocalMenorQue(6)) .     ***COMPROBADO
+*** True =>  Si el aforo es menor que 6 (es <6) entonces jamas se superara el aforo
 ***Si alguien está en la cola acaba entrando.
-(red modelCheck(initn, estaEnLacola("Alberto") -> <> estaEnElLocal("Alberto")) .)
+red modelCheck(initn, estaEnLacola("Jose") -> <> estaEnElLocal("Jose")) .
 ***El alcohol nunca se acaba.
-(red modelCheck(initn, [] quedaAlcoholLocal()) .)
+***red modelCheck(initn, [] quedaAlcoholLocal()) .
 ***Los refrescos siempre se acaban.
-(red modelCheck(initn, [] not quedaRefrescosLocal) .)
+***red modelCheck(initn, [] not quedaRefrescosLocal) .
 ***En algún momento alguien bebe de más, y permanece en ese estado para siempre.
 ***WHAT?(red modelCheck(initn, XXX) .)
 ***Si hay hielo, refrescos y alcohol en la zona de botellón, entonces en algun momento alguien bebe de más.
