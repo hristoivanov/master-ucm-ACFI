@@ -97,28 +97,32 @@ mod SABADO is
 
   op insertaListaLocal : Persona ListaLocal -> ListaLocal .
   eq insertaListaLocal(| S1 N1 normal N2 BA |, L1) = | S1 N1 normal N2 BA | y L1 .
+  eq insertaListaLocal(| S1 N1 SA N2 BA |, nListaLocal) = | S1 N1 SA N2 BA | .
   eq insertaListaLocal(| S1 N1 vip N2 BA |, L1 y | S2 N3 normal N4 BB | ) =  L1 y | S2 N3 normal N4 BB | y | S1 N1 vip N2 BA | .
   eq insertaListaLocal(| S1 N1 vip N2 BA |, L1 y | S2 N3 vip N4 BB | ) =  insertaListaLocal(| S1 N1 vip N2 BA |, L1) y | S2 N3 vip N4 BB | .
   
-  ***********************************///INICIO - COMPROBAR\\\***********************************
+  ***********************************///INICIO - ALBERTO\\\***********************************
   *** COMPROBAR CON MAUDE
   *** True - If P1 es menor
   op esMenor : Persona -> Bool .
-  ceq esMenor(| S1 N1 SA N2 BA |) = true
-    if N1 < 18 . 
-  eq esMenor(P1) = false [owise] .	
+  eq esMenor(| S1 N1 SA N2 BA |) = 
+   if N1 < 18 then true
+   else false
+   fi .
   
   *** haBebidoDemasiado. True - If P1 ha bebido 3 o más copas
   op hBD : Persona -> Bool .
-  ceq hBD(| S1 N1 SA N2 BA |) = true
-    if N2 >= 3 . 
-  eq hBD(P1) = false [owise] .
+  eq hBD(| S1 N1 SA N2 BA |) = 
+   if N2 >= 3 then true
+   else false
+   fi .
   
   *** Cantidad de gente Local
   op localNoLLeno : Local -> Bool .
-  ceq localNoLLeno(# N1, N2, N3, B1 #) = true
-    if cantidadGente(B1) < N1 .
-  eq localNoLLeno(# N1, N2, N3, B1 #) = false [owise] .
+  eq localNoLLeno(# N1, N2, N3, B1 #) = 
+   if cantidadGente(B1) < N1 then true
+   else false
+   fi .
   
   op cantidadGente : Botellon -> Nat .
   eq cantidadGente(P1 B1) = 1 + cantidadGente(B1) .
@@ -127,10 +131,9 @@ mod SABADO is
   *** Pasa a una persona de la cola al Local
   op entraLocal : Persona Local -> Local .
   eq entraLocal(| S1 N1 SA N2 BA |, # N3, N4, N5, B1 #) = # N3, N4, N5, (| S1 N1 SA N2 |  B1) # .
- 
+
   
-  
-  ***********************************///FIN - COMPROBAR\\\***********************************
+  ***********************************///FIN - ALBERTO\\\***********************************
   
   ***************************************************************
   crl [botellon-tomar-refresco-todo-bolsa] :  
@@ -163,55 +166,64 @@ mod SABADO is
     if esMenor(P1) or hBD(P1) . *** haBebidoDemasiado 
 
 	
-  ***********************************///INICIO - COMPROBAR\\\***********************************
-  
+  ***********************************///INICIO - ALBERTO\\\***********************************
+
   crl[cola-local] :
      \\\ B1 \\\ L1 y P1 /// LA ///
   => \\\ B1 \\\ L1 /// entraLocal(P1, LA) /// 
     if not esMenor(P1) and  not hBD(P1) and localNoLLeno(LA) . 
-	
+  ***(
   crl[local-tomar-refresco] :
-     # N1, N2, N3, | S1 N4 SA N5 | B1 #
-  => # N1, N2, sd(N3,1), | S1 N4 SA N5 | B1 #
-    if N3 > 0 .
-	
+     # N1, N2, N3, (| S1 N4 SA N5 | B1) #
+  => # N1, N2, (sd(N3,1)), (| S1 N4 SA N5 | B1) #
+    if N3 > 0 and (SA == vip or SA == normal) .
+  )
   crl[local-tomar-copa] :
-     # N1, N2, N3, | S1 N4 SA N5 | B1 #
-  => # N1, sd(N2,1), sd(N3,1), | S1 N4 SA (N5+1) | B1 #
-    if N2 > 0  and N3 > 0 and N5 < 4 .	
-	
+     # N1, N2, N3, (| S1 N4 SA N5 | B1) #
+  => # N1, (sd(N2,1)), (sd(N3,1)), (| S1 N4 SA (N5 + 1) | B1) #
+    if N2 > 0  and N3 > 0 and N5 < 4 and (SA == vip or SA == normal) .	
+  	
   crl[echar-del-local] :
-     # N1, N2, N3, | "dabi" N6 manager N7 | | S1 N4 SA N5 | B1 #
-  => # N1, N2, N3, | "dabi" N6 manager N7 | B1 #
-    if N5 >= 4 .
+     # N1, N2, N3, (| S1 N4 SA N5 | B1) #
+  => # N1, N2, N3, (B1) #
+    if N5 >= 4 and (SA == vip or SA == normal) .
 
-  rl[volver-a-casa] :
-     # N1, N2, N3, | S1 N4 (normal or vip) N5 | B1 #   ***esto se puede hacer?
-  => # N1, N2, N3, B1 #	.
- ***********************************///FIN - COMPROBAR\\\***********************************
+  crl[volver-a-casa] :
+     # N1, N2, N3, (| S1 N4 SA N5 | B1) #  
+  => # N1, N2, N3, B1 #	
+    if SA == vip or SA == normal .
   
-  
+ ***********************************///FIN - ALBERTO\\\***********************************
+
   op initB : Nat Nat Nat -> Bolsa .
   eq initB(N1, N2, N3) = < N1, N2, N3 > .
   op initP : String Nat Status Nat Bolsa -> Persona .
   eq initP(S1, N1, SA, N2, BA) = | S1 N1 SA N2 BA | .
+
+  op initM : String Nat Status Nat -> Persona .
+  eq initM(S1, N1, SA, N2) = | S1 N1 SA N2 | . 
   
-  ops init initLocal: -> Botellon .
+  op init : -> Botellon .
   eq init = initP("Jose"      , 30, normal  , 0, initB(2, 1, 1)) 
             initP("Mariano"   , 30, normal  , 0, initB(0, 0, 1))
             initP("Hristo"    , 30, normal  , 0, initB(0, 0, 0))	
-            initP("Alberto"   , 17, normal  , 0, initB(1, 2, 1))
+            initP("Zafiro"   , 17, normal  , 0, initB(1, 2, 1))
             initP("Gildo"     , 30, vip     , 0, initB(1, 0, 1))
             initP("Luisma"    , 30, vip     , 0, initB(1, 2, 0)) . 
-  eq initLocal = initP("Dabi", 23, manager  , 0)) .
   
-  op initn : -> Noche .
-  eq initn = \\\ init \\\ nListaLocal /// # 5, 6, 5, initLocal # /// .
+  op initLocal : -> Botellon . 
+  eq initLocal = initM("Dabi" , 23, manager, 0) .
 
+  op listaEntrada : -> ListaLocal .
+  eq listaEntrada = insertaListaLocal(initP("Jose", 30, normal, 0, initB(2, 1, 1)), nListaLocal) .
+
+  op initn : -> Noche .
+  ***eq initn = \\\ nBotellon \\\ listaEntrada /// # 5, 6, 5, initLocal # /// .
+  eq initn = \\\ init \\\ nListaLocal /// # 5, 6, 5, initLocal # /// .
 endm 
 
-frew init .
-frew initn .
+***frew init .
+frew [1000] initn .
 
 (omod PROPS is
   pr SATISFACTION .
