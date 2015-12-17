@@ -13,7 +13,7 @@ mod SABADO is
   op <_,_,_> : Nat Nat Nat -> Bolsa [ctor] .
 
   sort Status .
-  ops normal, vip, manager : -> Status .
+  ops normal vip manager : -> Status [ctor] .
 
   sort Persona .
   *** Nombre, Edad, Rol, Copas, Bolsa
@@ -33,7 +33,7 @@ mod SABADO is
   
   sort Local .
   *** Aforo, Alcohol, Refrescos, Gente
-  op #_,_,_,_# : Nat Nat Nat Botellon -> Local .
+  op #_,_,_,_# : Nat Nat Nat Botellon -> Local [ctor] .
   
   sort Noche .
   op \\\_\\\_///_/// : Botellon ListaLocal Local -> Noche [ctor] .
@@ -136,32 +136,34 @@ mod SABADO is
   ***********************************///FIN - ALBERTO\\\***********************************
   
   ***************************************************************
-  crl [botellon-tomar-refresco-todo-bolsa] :  
+  crl [botellon-tomar-refresco-todo-bolsa] :                          *** 5 No confluente
      | S1 N1 SA N2 BA | B1 
   => | S1 N1 SA N2 rR(rH(BA)) | B1 
     if hHB(BA) and hRB(BA) .  
 
-  crl[botellon-tomar-refresco-botellon-bolsa] : 
+  crl[botellon-tomar-refresco-botellon-bolsa] :                       *** 5 No confluente
      | S1 N1 SA N2 BA | B1 
   => | S1 N1 SA N2 rR(BA) | tPH(B1) 
     if not hHB(BA) and hH(B1) and hRB(BA) .
 
-  crl[botellon-tomar-alcohol-todo-bolsa] : 
+  crl[botellon-tomar-alcohol-todo-bolsa] :                            *** 5 No confluente
      | S1 N1 SA N2 BA | B1 
   => | S1 N1 SA (s(N2)) rA(rR(rH(BA))) | B1 
     if hHB(BA) and hRB(BA) and hAB(BA) .  
 
-  crl[botellon-tomar-alcohol-botellon-bolsa] : 
+  crl[botellon-tomar-alcohol-botellon-bolsa] :                        *** 5 No confluente
      | S1 N1 SA N2 BA | B1 
   => | S1 N1 SA (s(N2)) rA(rR(BA)) | tPH(B1) 
     if not hHB(BA) and hH(B1) and hRB(BA) and hAB(BA) .
-  
-  crl[ponerse-a-la-cola] :
+
+  *** 'Visible' para 3, 7, 8, 9
+  crl[ponerse-a-la-cola] :                                            *** 5 No invisible
      \\\ | S1 N1 SA N2 BA | B1 \\\ L1 /// LA ///
   => \\\ B1 \\\ insertaListaLocal(| S1 N1 SA N2 BA |, L1) /// LA /// 
     if SA =/= manager .
 
-  crl[cola-botellon] :
+  *** 'Visible' para 3, 7, 8, 9
+  crl[cola-botellon] :                                                *** 5 No invisible
      \\\ B1 \\\ L1 y P1 /// LA ///
   => \\\ P1 B1 \\\ L1 /// LA /// 
     if esMenor(P1) or hBD(P1) . *** haBebidoDemasiado 
@@ -169,27 +171,32 @@ mod SABADO is
 	
   ***********************************///INICIO - ALBERTO\\\***********************************
 
-  crl[cola-local] :
+  *** 'Visible' para 3, 4, 5
+  crl[cola-local] :                                                   *** 5 No invisible
      \\\ B1 \\\ L1 y P1 /// LA ///
   => \\\ B1 \\\ L1 /// entraLocal(P1, LA) /// 
     if not esMenor(P1) and  not hBD(P1) and localNoLLeno(LA) . 
-  ***(
-  crl[local-tomar-refresco] :
+
+  *** 'Visible' para 2  
+  crl[local-tomar-refresco] :                                         *** 5 No invisible
      # N1, N2, N3, (| S1 N4 SA N5 | B1) #
   => # N1, N2, (sd(N3,1)), (| S1 N4 SA N5 | B1) #
     if N3 > 0 and (SA == vip or SA == normal) .
-  )
-  crl[local-tomar-copa] :
+  
+  *** 'Visible' para 1, 2, 6
+  crl[local-tomar-copa] :                                             *** 5 No invisible
      # N1, N2, N3, (| S1 N4 SA N5 | B1) #
   => # N1, (sd(N2,1)), (sd(N3,1)), (| S1 N4 SA (N5 + 1) | B1) #
     if N2 > 0  and N3 > 0 and N5 < 4 and (SA == vip or SA == normal) .	
   	
-  crl[echar-del-local] :
+  *** 'Visible' para 4, 5, 6
+  crl[echar-del-local] :                                              *** 5 No invisible
      # N1, N2, N3, (| S1 N4 SA N5 | B1) #
   => # N1, N2, N3, (B1) #
     if N5 >= 4 and (SA == vip or SA == normal) .
 
-  crl[volver-a-casa] :
+  *** 'Visible' para 4, 5, 6
+  crl[volver-a-casa] :                                                *** 5 No invisible
      # N1, N2, N3, (| S1 N4 SA N5 | B1) #  
   => # N1, N2, N3, B1 #	
     if SA == vip or SA == normal .
@@ -289,19 +296,24 @@ mod PROPS is
   
   ***Si una persona ha bebido demasiado (3 o más copas fuera del local o 4 o más dentro).
   op hayBorrachos : -> Prop [ctor] .
-  eq \\\ B1 \\\ L1 /// # N1, N2, N3, B2 # /// |= hayBorrachos = hayBorrachosListLocal(L1) or hayBorrachosBotellon(B1) .
+  eq \\\ B1 \\\ L1 /// # N1, N2, N3, B2 # /// |= hayBorrachos = hayBorrachosListLocal(L1) or hayBorrachosBotellon(B1) or hayBorrachosLocal(B2) .
   
   op hayBorrachosBotellon : Botellon -> Bool .
   ceq hayBorrachosBotellon(| S1 N1 SA N2 BA | B1) = true
-    if N2 > 3 .	
+    if N2 >= 3 .	
   eq hayBorrachosBotellon(B1) = false [owise] .
   
   op hayBorrachosListLocal : ListaLocal -> Bool .
   ceq hayBorrachosListLocal(| S1 N1 SA N2 BA | y L1) = true
-    if N2 > 3 .
+    if N2 >= 3 .
   ceq hayBorrachosListLocal(| S1 N1 SA N2 BA | y L1) = hayBorrachosListLocal(L1)
-    if N2 <= 3 .	
-  eq hayBorrachosListLocal(nListaLocal) = false . 
+    if N2 < 3 .	
+  eq hayBorrachosListLocal(nListaLocal) = false .
+
+  op hayBorrachosLocal : Botellon -> Bool .
+  ceq hayBorrachosLocal(| S1 N1 SA N2 BA | B1) = true
+    if N2 >= 4 .	
+  eq hayBorrachosLocal(B1) = false [owise] . 
   
   ***Si queda hielo en la zona de botellón
   op quedaHielo : -> Prop [ctor] .
@@ -358,23 +370,23 @@ endm
 
 ***Ejercicio 4
 ***"Dabi" siempre está en el local.
-***red modelCheck(initn, [] estaEnElLocal("Dabi")) .                                                     ***COMPROBADO
+red modelCheck(initn, [] estaEnElLocal("Dabi")) .                                                     ***COMPROBADO
 *** True => Dabi siempre esta en el Local, no bebe y no se va a ningun lado
 ***Si el aforo no se supera al principio, entonces no se supera nunca.
-***red modelCheck(initn, <> numPersonasLocalMenorQue(6) -> [] numPersonasLocalMenorQue(6)) .             ***COMPROBADO
+red modelCheck(initn, <> numPersonasLocalMenorQue(6) -> [] numPersonasLocalMenorQue(6)) .             ***COMPROBADO
 *** True =>  Si el aforo es menor que 6 (es <6) entonces jamas se superara el aforo
 ***Si alguien está en la cola acaba entrando.
-***red modelCheck(initn, <> estaEnLacola("Jose") -> <> estaEnElLocal("Jose")) .                          ***COMPROBADO
+red modelCheck(initn, <> estaEnLacola("Jose") -> <> estaEnElLocal("Jose")) .                          ***COMPROBADO
 *** False => Si "Jose" se bebe en el botellon 3 o mas copas podra ponerse a la cola pero nunca entrara en el Local
 ***El alcohol nunca se acaba.
-***red modelCheck(initn, [] quedaAlcoholLocal ) .                                                        ***COMPROBADO
+red modelCheck(initn, [] quedaAlcoholLocal ) .                                                        ***COMPROBADO
 *** True => En este caso devuelve "true" porque en el local hay mas alcohol que refrescos por lo que siempre sobrara alcohol. En caso de haber mas o igual cantidad de resfrescos devolveria "false"
 ***Los refrescos siempre se acaban.
-***red modelCheck(initn, [] ~ quedaRefrescosLocal) .                                                     ***COMPROBADO
+red modelCheck(initn, [] ~ quedaRefrescosLocal) .                                                     ***COMPROBADO
 *** False => Porque en el local pueden irse a casa sin beber
 ***En algún momento alguien bebe de más, y permanece en ese estado para siempre.
-***red modelCheck(initn, <> hayBorrachos -> [] hayBorrachos) .                                           ***COMPROBADO
+red modelCheck(initn, <> hayBorrachos -> [] hayBorrachos) .                                           ***COMPROBADO
 *** True => Si hay un borracho en el botellon este borracho siempre estara en el botellon o en la cola
 ***Si hay hielo, refrescos y alcohol en la zona de botellón, entonces en algun momento alguien bebe de más.
-***red modelCheck(initn,  quedaHielo /\ quedaRefresco /\ quedaAlcohol -> <> hayBorrachos) .              ***COMPROBADO
+red modelCheck(initn,  quedaHielo /\ quedaRefresco /\ quedaAlcohol -> <> hayBorrachos) .              ***COMPROBADO
 *** True => En nuestro codigo es true porque "Jose" va borracho ya al botellon, sin embargo si "Jose" no va al botellon la respuesta es FALSE
