@@ -373,10 +373,10 @@ endm
 red modelCheck(initn, [] estaEnElLocal("Dabi")) .                                                     ***COMPROBADO
 *** True => Dabi siempre esta en el Local, no bebe y no se va a ningun lado
 ***Si el aforo no se supera al principio, entonces no se supera nunca.
-red modelCheck(initn, <> numPersonasLocalMenorQue(6) -> [] numPersonasLocalMenorQue(6)) .             ***COMPROBADO
+red modelCheck(initn, numPersonasLocalMenorQue(6) -> [] numPersonasLocalMenorQue(6)) .             ***COMPROBADO
 *** True =>  Si el aforo es menor que 6 (es <6) entonces jamas se superara el aforo
 ***Si alguien está en la cola acaba entrando.
-red modelCheck(initn, <> estaEnLacola("Jose") -> <> estaEnElLocal("Jose")) .                          ***COMPROBADO
+red modelCheck(initn, [](<> estaEnLacola("Jose") -> <> estaEnElLocal("Jose"))) .                          ***COMPROBADO
 *** False => Si "Jose" se bebe en el botellon 3 o mas copas podra ponerse a la cola pero nunca entrara en el Local
 ***El alcohol nunca se acaba.
 red modelCheck(initn, [] quedaAlcoholLocal ) .                                                        ***COMPROBADO
