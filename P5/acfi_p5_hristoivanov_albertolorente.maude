@@ -382,7 +382,7 @@ red modelCheck(initn, [](<> estaEnLacola("Jose") -> <> estaEnElLocal("Jose"))) .
 red modelCheck(initn, [] quedaAlcoholLocal ) .                                                        ***COMPROBADO
 *** True => En este caso devuelve "true" porque en el local hay mas alcohol que refrescos por lo que siempre sobrara alcohol. En caso de haber mas o igual cantidad de resfrescos devolveria "false"
 ***Los refrescos siempre se acaban.
-red modelCheck(initn, [] ~ quedaRefrescosLocal) .                                                     ***COMPROBADO
+red modelCheck(initn, [] <> ~ quedaRefrescosLocal) .                                                     ***COMPROBADO
 *** False => Porque en el local pueden irse a casa sin beber
 ***En algún momento alguien bebe de más, y permanece en ese estado para siempre.
 red modelCheck(initn, <> hayBorrachos -> [] hayBorrachos) .                                           ***COMPROBADO
